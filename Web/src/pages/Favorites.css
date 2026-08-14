@@ -1,0 +1,7 @@
+.fav-header { margin-bottom:20px; }
+.fav-tabs { display:flex; gap:8px; margin-bottom:24px; border-bottom:2px solid var(--gray-100); padding-bottom:0; }
+.fav-tab { padding:10px 20px; font-weight:700; font-size:0.9rem; color:var(--gray-500); background:none; border:none; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; transition:all var(--transition); display:flex; align-items:center; gap:6px; }
+.fav-tab.active { color:var(--blue-primary); border-bottom-color:var(--blue-primary); }
+.fav-tab:hover { color:var(--blue-primary); }
+.fav-count { display:inline-flex; align-items:center; justify-content:center; background:var(--blue-pale); color:var(--blue-primary); border-radius:var(--radius-full); font-size:0.72rem; min-width:20px; height:20px; padding:0 6px; }
+.fav-tab.active .fav-count { background:var(--blue-primary); color:white; }

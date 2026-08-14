@@ -1,0 +1,6 @@
+.breadcrumbs { display:flex; align-items:center; flex-wrap:wrap; gap:2px; padding:8px 0 16px; font-size:0.82rem; }
+.bc-link { color:var(--blue-primary); text-decoration:none; transition:color var(--transition); }
+.bc-link:hover { color:var(--blue-deep); text-decoration:underline; }
+.bc-sep { color:var(--gray-300); margin:0 4px; }
+.bc-current { color:var(--gray-600); font-weight:600; }
+.bc-item { display:flex; align-items:center; }

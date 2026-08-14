@@ -1,0 +1,41 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: maxercise-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: Maxercise123!
+      MYSQL_DATABASE: maxercise
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  backend:
+    build:
+      context: ../Backend
+      dockerfile: Dockerfile
+    container_name: maxercise-backend
+    restart: always
+    environment:
+      - DATABASE_URL=mysql://root:Maxercise123!@db:3306/maxercise
+      - JWT_SECRET=MaxerciseSuperSecretToken123!
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ../Web
+      dockerfile: Dockerfile
+    container_name: maxercise-frontend
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:

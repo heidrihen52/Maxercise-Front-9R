@@ -1,0 +1,15 @@
+.home-page { min-height:100vh; }
+.home-welcome { display:flex; justify-content:space-between; align-items:flex-start; gap:24px; flex-wrap:wrap; margin-bottom:24px; padding:28px 0 8px; }
+.home-title { font-family:var(--font-display); font-size:2rem; font-weight:800; color:var(--gray-800); margin-bottom:8px; }
+.welcome-goal { margin-top:8px; }
+.show-all-toggle { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+.toggle-label { font-size:0.82rem; color:var(--gray-500); font-weight:500; }
+.toggle-btn { padding:8px 18px; border-radius:var(--radius-full); font-weight:700; font-size:0.82rem; border:none; cursor:pointer; transition:all var(--transition); }
+.toggle-btn.safe { background:var(--warning-light); color:#92400e; }
+.toggle-btn.safe:hover { background:#fde68a; }
+.toggle-btn.all { background:var(--blue-pale); color:var(--blue-primary); }
+.toggle-btn.all:hover { background:var(--blue-primary); color:white; }
+.home-section { margin-bottom:64px; }
+.section-header-row { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:20px; gap:16px; flex-wrap:wrap; }
+.link-btn { background:none; border:none; color:var(--blue-primary); font-weight:600; cursor:pointer; font-size:inherit; padding:0; text-decoration:underline; }
+@media(max-width:768px) { .home-welcome { flex-direction:column; } }
