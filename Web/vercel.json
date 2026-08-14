@@ -6,7 +6,7 @@
       "destination": "https://maxercise-front-9r-1.onrender.com/api/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ]
