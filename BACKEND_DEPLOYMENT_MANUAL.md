@@ -26,13 +26,39 @@ Por ello, la opción recomendada para mantener el backend activo, con soporte co
 Dado que Render no incluye una base de datos MySQL gratuita en su panel (solo PostgreSQL de corta duración), usaremos un proveedor externo de base de datos MySQL gratis compatible con Prisma:
 
 ### Opción A: TiDB Cloud (Recomendado - 5GB Gratis)
-TiDB es un motor de base de datos SQL compatible con el protocolo MySQL y ofrece una capa gratuita excelente.
-1. Regístrate en [TiDB Cloud](https://pingcap.com/tidb-cloud).
-2. Crea un clúster de tipo **Serverless**.
-3. En la sección de conexión, selecciona **Prisma** o **MySQL Client**.
-4. Te dará un enlace de conexión similar a:
-   `mysql://[USUARIO]:[CONTRASEÑA]@[HOST]:4000/[DB_NAME]?sslaccept=strict`
-5. **Copia esta URL**, la usaremos como tu `DATABASE_URL`.
+TiDB es una base de datos distribuida totalmente compatible con el protocolo MySQL que ofrece una capa gratuita permanente muy generosa (5 GiB de almacenamiento y 50 millones de Request Units mensuales).
+
+Sigue estos pasos detallados para crear tu base de datos:
+
+#### Paso 1: Registro e inicio de sesión
+1. Entra a [TiDB Cloud](https://pingcap.com/tidb-cloud) y regístrate con tu correo, o inicia sesión rápidamente usando tu cuenta de Google o GitHub.
+2. Una vez completado el registro, serás redirigido al panel principal de administración de TiDB Cloud.
+
+#### Paso 2: Crear el Clúster Serverless
+1. En la parte superior derecha de tu consola, haz clic en el botón azul **"Create Cluster"** (o en **"Get Started for Free"** si es tu primera vez).
+2. Se te presentarán varias opciones de tipo de clúster:
+   * **TiDB Serverless** (Capa gratuita de $0/mes) ➔ **Selecciona esta opción**.
+   * *TiDB Dedicated* (Opción de pago).
+3. Configura los detalles del clúster:
+   * **Cluster Name**: Escribe un nombre identificativo para tu base de datos (por ejemplo: `maxercise-db`).
+   * **Cloud Provider**: Elige **AWS** (es el proveedor por defecto para la capa gratuita).
+   * **Region**: Selecciona la región que esté más cerca del servidor donde desplegarás tu backend (por ejemplo, si vas a usar la región por defecto de Render en el este de EE.UU., selecciona **AWS N. Virginia (us-east-1)** o **AWS Oregon (us-west-2)**). Esto minimiza la latencia de las consultas.
+4. Haz clic en **"Create"**. La creación del clúster tardará entre 10 y 20 segundos. Verás una barra de progreso que indica que se está aprovisionando tu base de datos.
+
+#### Paso 3: Definir la Contraseña y Obtener la URL de Conexión
+1. Una vez que el estado del clúster cambie a **"Active"**, aparecerá una ventana emergente para que definas la contraseña del usuario `root` (o administrador).
+2. Haz clic en **"Generate Password"** para que TiDB cree una contraseña segura aleatoria, o escribe una de tu preferencia. **Guarda muy bien esta contraseña**, ya que no se volverá a mostrar en texto plano.
+3. Haz clic en **"Connect"** (si la ventana no se abrió sola, verás un botón **"Connect"** en la parte superior derecha del clúster).
+4. En el panel de conexión:
+   * **Connection Method**: Selecciona la pestaña **"Prisma"** (ya que tu backend utiliza Prisma ORM).
+   * **Connection String**: Copia el código o URL de conexión que te genera de forma automática. El formato de la URL de base de datos para Prisma será el siguiente:
+     ```text
+     mysql://[USUARIO].[PREFIX]:[PASSWORD]@[HOST]:4000/[DB_NAME]?sslaccept=strict
+     ```
+     *(TiDB Cloud requiere conexiones cifradas SSL obligatoriamente, por lo que el parámetro `?sslaccept=strict` al final es fundamental para que Prisma no dé error de conexión).*
+5. Por defecto, TiDB Cloud te crea una base de datos llamada `test`. Puedes usar esa misma base de datos reemplazando `[DB_NAME]` por `test`, o dejar el enlace tal como te lo genera la consola de TiDB.
+6. **Copia esta URL**, la usaremos como tu variable de entorno `DATABASE_URL` tanto localmente para migrar como en el panel de Render.
+
 
 ### Opción B: Clever Cloud (20MB Gratis)
 Clever Cloud es ideal para proyectos pequeños y te da una base de datos MySQL nativa de forma gratuita e ilimitada en tiempo.
