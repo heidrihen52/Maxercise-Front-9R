@@ -137,15 +137,15 @@ DATABASE_URL="mysql://[USER]:[PASS]@[HOST]:[PORT]/[DB]" npx prisma db push
 ```
 
 ### Paso 2: Crear el Administrador y poblar datos iniciales
-Ejecuta los scripts de inicialización locales pero apuntando a la base de datos remota de producción:
+Ejecuta los nuevos scripts configurados apuntando temporalmente a tu base de datos remota de producción:
 
 * **Crear Administrador:**
   ```bash
-  DATABASE_URL="mysql://[USER]:[PASS]@[HOST]:[PORT]/[DB]" npx ts-node create-admin.ts
+  DATABASE_URL="mysql://[USER]:[PASS]@[HOST]:[PORT]/[DB]?sslaccept=strict" npm run create-admin
   ```
 * **Poblar catálogo (Ejercicios y Rutinas):**
   ```bash
-  DATABASE_URL="mysql://[USER]:[PASS]@[HOST]:[PORT]/[DB]" npx ts-node -e "import { seedDatabase } from './src/services/seed.service'; seedDatabase().then(() => console.log('Base de datos poblada exitosamente')).catch(console.error);"
+  DATABASE_URL="mysql://[USER]:[PASS]@[HOST]:[PORT]/[DB]?sslaccept=strict" npm run seed
   ```
 
 ---
