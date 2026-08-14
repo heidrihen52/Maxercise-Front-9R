@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://maxercise-front-9r-1.onrender.com/"
+      "destination": "https://maxercise-front-9r-1.onrender.com"
     },
     {
       "source": "/(.*)",
