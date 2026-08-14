@@ -6,7 +6,51 @@
       "destination": "https://maxercise-front-9r-1.onrender.com/api/:path*"
     },
     {
-      "source": "/((?!api|assets|favicon.ico).*)",
+      "source": "/login",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/register",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/forgot-password",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/reset-password",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/verify-email",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/preview",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/questionnaire",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/home",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/exercises",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/routines",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/favorites",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/admin",
       "destination": "/index.html"
     }
   ]
