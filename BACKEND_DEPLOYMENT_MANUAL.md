@@ -90,7 +90,7 @@ En el formulario de configuración, completa la información de la siguiente man
 * **Runtime:** `Node`
 * **Build Command:**
   ```bash
-  npm install && npx prisma generate && npm run build
+  NODE_ENV=development npm install && npx prisma generate && npm run build
   ```
 * **Start Command:**
   ```bash
