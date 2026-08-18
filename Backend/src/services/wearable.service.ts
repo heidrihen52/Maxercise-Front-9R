@@ -2,7 +2,7 @@ import { prisma } from '../config/prisma';
 import { AppError } from '../utils/AppError';
 
 export async function getWearableSyncPayload(userId: number) {
-  const [activeRoutine, favorites, restrictions] = await Promise.all([
+  const [activeRoutine, favoriteRoutines, favoriteExercises, restrictions] = await Promise.all([
     prisma.userActiveRoutine.findUnique({
       where: { user_id: userId },
       include: {
@@ -32,6 +32,17 @@ export async function getWearableSyncPayload(userId: number) {
             title: true,
             difficulty: true,
             body_type: true,
+          },
+        },
+      },
+    }),
+    prisma.userFavoriteExercise.findMany({
+      where: { user_id: userId },
+      include: {
+        exercise: {
+          select: {
+            id: true,
+            title: true,
           },
         },
       },
@@ -80,11 +91,15 @@ export async function getWearableSyncPayload(userId: number) {
           days,
         }
       : null,
-    favorites: favorites.map((f) => ({
+    favorites: favoriteRoutines.map((f) => ({
       id: f.routine.id,
       title: f.routine.title,
       difficulty: f.routine.difficulty,
       bodyType: f.routine.body_type,
+    })),
+    favoriteExercises: favoriteExercises.map((f) => ({
+      id: f.exercise.id,
+      title: f.exercise.title,
     })),
     restrictions: restrictions.map((r) => ({
       id: r.restriction.id,

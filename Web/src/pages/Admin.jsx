@@ -1,7 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { Plus, Notebook, Barbell, FolderOpen, PencilSimpleLine, Users, ShieldCheck,
          BookOpen, PencilLine, Trash, X, Check, Eye, House, SignOut, CaretRight,
-         ListBullets, Rows, Brain, HeartBreak, Pulse } from '@phosphor-icons/react';
+         ListBullets, Rows, Brain, HeartBreak, Pulse, Database, UploadSimple, DownloadSimple, Broom } from '@phosphor-icons/react';
+import { io } from 'socket.io-client';
+import * as am5 from '@amcharts/amcharts5';
+import * as am5xy from '@amcharts/amcharts5/xy';
+import * as am5percent from '@amcharts/amcharts5/percent';
+import * as am5radar from '@amcharts/amcharts5/radar';
+import am5themes_Animated from '@amcharts/amcharts5/themes/Animated';
 import { Link, useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
@@ -16,6 +22,402 @@ const ROUTINE_CATS = [
 
 const emptyEx = { name:'', description:'', instructions:'', muscleGroup:'chest', bodyArea:'upper', difficulty:'beginner', equipment:'', image:'' };
 const emptyRt = { name:'', description:'', level:'beginner', duration:'', frequency:'', category:'full_body', image:'', selectedExercises:[] };
+
+// ─── AMCHARTS COMPONENTS ──────────────────────────────────────
+
+function AmChartsBar({ data }) {
+  const chartRef = useRef(null);
+  
+  useLayoutEffect(() => {
+    let root = am5.Root.new("am5-bar-chart");
+    root.setThemes([am5themes_Animated.new(root)]);
+
+    let chart = root.container.children.push(
+      am5xy.XYChart.new(root, {
+        panX: true,
+        panY: true,
+        wheelX: "panX",
+        wheelY: "zoomX",
+        pinchZoomX: true,
+        paddingLeft: 0,
+        paddingRight: 10
+      })
+    );
+
+    let cursor = chart.set("cursor", am5xy.XYCursor.new(root, {}));
+    cursor.lineY.set("visible", false);
+
+    let xRenderer = am5xy.AxisRendererX.new(root, { minGridDistance: 30 });
+    xRenderer.labels.template.setAll({
+      centerY: am5.p50,
+      centerX: am5.p50,
+      paddingRight: 15
+    });
+
+    xRenderer.grid.template.setAll({ location: 1 });
+
+    let xAxis = chart.xAxes.push(
+      am5xy.CategoryAxis.new(root, {
+        maxDeviation: 0.3,
+        categoryField: "name",
+        renderer: xRenderer,
+        tooltip: am5.Tooltip.new(root, {})
+      })
+    );
+
+    let yAxis = chart.yAxes.push(
+      am5xy.ValueAxis.new(root, {
+        maxDeviation: 0.3,
+        renderer: am5xy.AxisRendererY.new(root, { strokeOpacity: 0.1 })
+      })
+    );
+
+    let series = chart.series.push(
+      am5xy.ColumnSeries.new(root, {
+        name: "Totales",
+        xAxis: xAxis,
+        yAxis: yAxis,
+        valueYField: "count",
+        sequencedInterpolation: true,
+        categoryXField: "name",
+        tooltip: am5.Tooltip.new(root, {
+          labelText: "{valueY}"
+        })
+      })
+    );
+
+    series.columns.template.setAll({ cornerRadiusTL: 5, cornerRadiusTR: 5, strokeOpacity: 0 });
+    series.columns.template.adapters.add("fill", function(fill, target) {
+      return chart.get("colors").getIndex(series.columns.indexOf(target));
+    });
+    series.columns.template.adapters.add("stroke", function(stroke, target) {
+      return chart.get("colors").getIndex(series.columns.indexOf(target));
+    });
+
+    xAxis.data.setAll(data);
+    series.data.setAll(data);
+    
+    series.appear(1000);
+    chart.appear(1000, 100);
+
+    chartRef.current = root;
+
+    return () => {
+      root.dispose();
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (chartRef.current) {
+       let chart = chartRef.current.container.children.getIndex(0);
+       let xAxis = chart.xAxes.getIndex(0);
+       let series = chart.series.getIndex(0);
+       xAxis.data.setAll(data);
+       series.data.setAll(data);
+    }
+  }, [data]);
+
+  return <div id="am5-bar-chart" style={{ width: "100%", height: "350px" }} />;
+}
+
+function AmChartsPie({ data, id = "am5-pie-chart" }) {
+  const chartRef = useRef(null);
+
+  useLayoutEffect(() => {
+    let root = am5.Root.new(id);
+    root.setThemes([am5themes_Animated.new(root)]);
+
+    let chart = root.container.children.push(
+      am5percent.PieChart.new(root, {
+        layout: root.verticalLayout,
+        innerRadius: am5.percent(50)
+      })
+    );
+
+    let series = chart.series.push(
+      am5percent.PieSeries.new(root, {
+        valueField: "count",
+        categoryField: "name",
+        alignLabels: false
+      })
+    );
+    
+    series.labels.template.setAll({
+      forceHidden: true
+    });
+    series.ticks.template.setAll({
+      forceHidden: true
+    });
+
+    series.data.setAll(data);
+
+    let legend = chart.children.push(am5.Legend.new(root, {
+      centerX: am5.percent(50),
+      x: am5.percent(50),
+      marginTop: 15,
+      marginBottom: 15
+    }));
+    legend.data.setAll(series.dataItems);
+
+    series.appear(1000, 100);
+
+    chartRef.current = root;
+
+    return () => {
+      root.dispose();
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (chartRef.current) {
+      let chart = chartRef.current.container.children.getIndex(0);
+      let series = chart.series.getIndex(0);
+      series.data.setAll(data);
+      let legend = chart.children.getIndex(1);
+      legend.data.setAll(series.dataItems);
+    }
+  }, [data]);
+
+  return <div id={id} style={{ width: "100%", height: "350px" }} />;
+}
+
+function AmChartsGauge({ value }) {
+  const chartRef = useRef(null);
+
+  useLayoutEffect(() => {
+    let root = am5.Root.new("am5-gauge-chart");
+    root.setThemes([am5themes_Animated.new(root)]);
+
+    let chart = root.container.children.push(am5radar.RadarChart.new(root, {
+      panX: false,
+      panY: false,
+      startAngle: 180,
+      endAngle: 360
+    }));
+
+    let axisRenderer = am5radar.AxisRendererCircular.new(root, {
+      innerRadius: -40
+    });
+    axisRenderer.grid.template.setAll({ stroke: root.interfaceColors.get("background"), visible: true, strokeOpacity: 0.8 });
+
+    let xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+      maxDeviation: 0,
+      min: 0,
+      max: 100,
+      strictMinMax: true,
+      renderer: axisRenderer
+    }));
+
+    let axisDataItem = xAxis.makeDataItem({});
+    let clockHand = am5radar.ClockHand.new(root, {
+      pinRadius: am5.percent(20),
+      radius: am5.percent(100),
+      bottomWidth: 40
+    });
+    
+    let bullet = axisDataItem.set("bullet", am5xy.AxisBullet.new(root, {
+      sprite: clockHand
+    }));
+
+    xAxis.createAxisRange(axisDataItem);
+
+    let label = chart.radarContainer.children.push(am5.Label.new(root, {
+      fill: am5.color(0x3b82f6),
+      centerX: am5.percent(50),
+      textAlign: "center",
+      centerY: am5.percent(50),
+      fontSize: "3em",
+      fontWeight: "bold"
+    }));
+    
+    axisDataItem.set("value", 0);
+    label.set("text", "0%");
+
+    chartRef.current = { root, axisDataItem, label };
+
+    return () => {
+      root.dispose();
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (chartRef.current) {
+      let { axisDataItem, label } = chartRef.current;
+      axisDataItem.animate({
+        key: "value",
+        to: value,
+        duration: 500,
+        easing: am5.ease.out(am5.ease.cubic)
+      });
+      label.set("text", Math.round(value) + "%");
+    }
+  }, [value]);
+
+  return <div id="am5-gauge-chart" style={{ width: "100%", height: "250px" }} />;
+}
+// ─── AmChartsRadar ──────────────────────────────────────────
+function AmChartsRadar({ data }) {
+  const chartRef = useRef(null);
+
+  useLayoutEffect(() => {
+    let root = am5.Root.new("am5-radar-chart");
+    root.setThemes([am5themes_Animated.new(root)]);
+
+    let chart = root.container.children.push(am5radar.RadarChart.new(root, {
+      panX: false,
+      panY: false,
+      wheelX: "none",
+      wheelY: "none"
+    }));
+
+    let xRenderer = am5radar.AxisRendererCircular.new(root, {});
+    xRenderer.labels.template.setAll({ radius: 10 });
+    let xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+      maxDeviation: 0,
+      categoryField: "category",
+      renderer: xRenderer
+    }));
+
+    let yRenderer = am5radar.AxisRendererRadial.new(root, {});
+    let yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+      renderer: yRenderer
+    }));
+
+    let series = chart.series.push(am5radar.RadarLineSeries.new(root, {
+      name: "Usuarios",
+      xAxis: xAxis,
+      yAxis: yAxis,
+      valueYField: "value",
+      categoryXField: "category",
+      tooltip: am5.Tooltip.new(root, { labelText: "{valueY}" })
+    }));
+
+    series.strokes.template.setAll({ strokeWidth: 2 });
+    series.fills.template.setAll({ fillOpacity: 0.2, visible: true });
+    
+    // Add legend
+    let legend = chart.children.push(am5.Legend.new(root, {
+      centerX: am5.percent(50),
+      x: am5.percent(50),
+      marginTop: 15,
+      marginBottom: 15
+    }));
+    legend.data.setAll(series.dataItems);
+
+    xAxis.data.setAll(data);
+    series.data.setAll(data);
+
+    series.appear(1000);
+    chart.appear(1000, 100);
+
+    chartRef.current = root;
+    return () => root.dispose();
+  }, [data]);
+
+  return <div id="am5-radar-chart" style={{ width: "100%", height: "350px" }} />;
+}
+
+// ─── AmChartsArea ───────────────────────────────────────────
+function AmChartsArea({ data }) {
+  const chartRef = useRef(null);
+
+  useLayoutEffect(() => {
+    let root = am5.Root.new("am5-area-chart");
+    root.setThemes([am5themes_Animated.new(root)]);
+
+    let chart = root.container.children.push(am5xy.XYChart.new(root, {
+      panX: true,
+      panY: true,
+      wheelX: "panX",
+      wheelY: "zoomX",
+      layout: root.verticalLayout
+    }));
+
+    chart.set("cursor", am5xy.XYCursor.new(root, {
+      behavior: "none"
+    }));
+
+    let xAxis = chart.xAxes.push(am5xy.DateAxis.new(root, {
+      baseInterval: { timeUnit: "day", count: 1 },
+      renderer: am5xy.AxisRendererX.new(root, { minGridDistance: 30 }),
+      tooltip: am5.Tooltip.new(root, {})
+    }));
+
+    let yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+      renderer: am5xy.AxisRendererY.new(root, {})
+    }));
+
+    let series = chart.series.push(am5xy.SmoothedXLineSeries.new(root, {
+      name: "Registros",
+      xAxis: xAxis,
+      yAxis: yAxis,
+      valueYField: "value",
+      valueXField: "date",
+      tooltip: am5.Tooltip.new(root, { labelText: "{valueY}" })
+    }));
+
+    series.fills.template.setAll({
+      fillOpacity: 0.2,
+      visible: true
+    });
+    series.strokes.template.setAll({
+      strokeWidth: 2
+    });
+
+    series.data.setAll(data);
+    series.appear(1000);
+    chart.appear(1000, 100);
+
+    chartRef.current = root;
+    return () => root.dispose();
+  }, [data]);
+
+  return <div id="am5-area-chart" style={{ width: "100%", height: "350px" }} />;
+}
+
+// ─── AmChartsFunnel ─────────────────────────────────────────
+function AmChartsFunnel({ data }) {
+  const chartRef = useRef(null);
+
+  useLayoutEffect(() => {
+    let root = am5.Root.new("am5-funnel-chart");
+    root.setThemes([am5themes_Animated.new(root)]);
+
+    let chart = root.container.children.push(
+      am5percent.SlicedChart.new(root, {
+        layout: root.verticalLayout
+      })
+    );
+
+    let series = chart.series.push(
+      am5percent.FunnelSeries.new(root, {
+        alignLabels: true,
+        orientation: "vertical",
+        valueField: "value",
+        categoryField: "category",
+        bottomRatio: 1
+      })
+    );
+
+    // Add legend
+    let legend = chart.children.push(am5.Legend.new(root, {
+      centerX: am5.percent(50),
+      x: am5.percent(50),
+      marginTop: 15,
+      marginBottom: 15
+    }));
+    legend.data.setAll(series.dataItems);
+
+    series.data.setAll(data);
+    series.appear(1000);
+    chart.appear(1000, 100);
+
+    chartRef.current = root;
+    return () => root.dispose();
+  }, [data]);
+
+  return <div id="am5-funnel-chart" style={{ width: "100%", height: "350px" }} />;
+}
 
 // ─── Inline Edit Form ─────────────────────────────────────────
 
@@ -306,7 +708,7 @@ function EditRoutineForm({ item, associationRules = [], onSave, onCancel }) {
 // ─── Main Component ───────────────────────────────────────────
 
 export default function Admin() {
-  const { exercises, routines, metadata, saveAdminItem, deleteAdminItem, updateAdminItem } = useData();
+  const { exercises, routines, metadata, saveAdminItem, deleteAdminItem, updateAdminItem, loadContent } = useData();
   const MUSCLE_GROUPS = metadata?.muscleGroups || [];
   const BODY_AREAS = metadata?.bodyAreas || [];
   const DIFFICULTY_LEVELS = metadata?.difficultyLevels || [];
@@ -324,6 +726,9 @@ export default function Admin() {
   const [associationRules, setAssociationRules] = useState([]);
   const [loadingAI, setLoadingAI] = useState(false);
   const [editingId, setEditingId] = useState(null); // id del item en edición
+  const [dbMetrics, setDbMetrics] = useState({ users: 0, exercises: 0, routines: 0, restrictions: 0 });
+  const [seedProgress, setSeedProgress] = useState(null);
+  const roomId = "admin-seed-room-" + (currentUser?.id || "default");
 
   const flash = (m, type = 'success') => { setMsg(m); setMsgType(type); setTimeout(() => setMsg(''), 3500); };
 
@@ -332,11 +737,31 @@ export default function Admin() {
     navigate('/login');
   };
 
-  useEffect(() => {
+  const fetchUsers = () => {
     adminAPI.getUsers()
       .then(data => setUsers(Array.isArray(data) ? data : (data.users || [])))
       .catch(() => flash('Error cargando usuarios', 'error'))
       .finally(() => setLoadingUsers(false));
+  };
+
+  const fetchMetrics = () => {
+    adminAPI.getMetrics()
+      .then(data => {
+        if (data.success) {
+          setDbMetrics({
+            users: data.users,
+            exercises: data.exercises,
+            routines: data.routines,
+            restrictions: data.restrictions
+          });
+        }
+      })
+      .catch(console.error);
+  };
+
+  useEffect(() => {
+    fetchUsers();
+    fetchMetrics();
   }, []);
 
   useEffect(() => {
@@ -360,6 +785,30 @@ export default function Admin() {
         .catch(() => console.error('Error loading association rules'));
     }
   }, [tab, associationRules.length]);
+
+  useEffect(() => {
+    let socket;
+    if (tab === 'db-dashboard') {
+      socket = io();
+      socket.on('connect', () => {
+        socket.emit('join_seed_room', roomId);
+      });
+      socket.on('seed_progress', (data) => {
+        setSeedProgress(data);
+        if (data.percent === 100) {
+          fetchUsers();
+          fetchMetrics();
+          if (loadContent) loadContent();
+        }
+      });
+      socket.on('metrics_update', (data) => {
+        setDbMetrics(p => ({ ...p, ...data }));
+      });
+    }
+    return () => {
+      if (socket) socket.disconnect();
+    };
+  }, [tab, roomId]);
 
   const saveEx = async (e) => {
     e.preventDefault();
@@ -439,6 +888,84 @@ export default function Admin() {
     } catch (err) { flash(err.message, 'error'); }
   };
 
+  const handleSeed = async () => {
+    try {
+      await adminAPI.seed({ count: 50, roomId });
+      flash('Seed iniciado...', 'success');
+    } catch (e) { flash(e.message, 'error'); }
+  };
+
+  const handleClean = async () => {
+    if (!window.confirm('¿Estás seguro de eliminar TODO de la BD?')) return;
+    try {
+      await adminAPI.clean();
+      flash('Base de datos limpiada', 'success');
+      setDbMetrics({ users: 0, exercises: 0, routines: 0, restrictions: 0 });
+    } catch (e) { flash(e.message, 'error'); }
+  };
+
+  const handleExportCsv = async () => {
+    try {
+      await adminAPI.exportCsv();
+      flash('Descargando CSV...', 'success');
+    } catch (e) { flash(e.message, 'error'); }
+  };
+
+  const handleImportCsv = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      await adminAPI.importCsv(file);
+      flash('CSV importado', 'success');
+    } catch (err) { flash(err.message, 'error'); }
+    e.target.value = null;
+  };
+  // Catálogo completo
+  const allExercises = exercises || [];
+  const allRoutines = routines || [];
+
+  // --- Nuevos Datasets ---
+  const bodyTypes = { ECTOMORFO: 0, MESOMORFO: 0, ENDOMORFO: 0 };
+  users.forEach(u => {
+    if (u.body_type) bodyTypes[u.body_type] = (bodyTypes[u.body_type] || 0) + 1;
+  });
+  const radarData = Object.keys(bodyTypes).map(type => ({ category: type, value: bodyTypes[type] }));
+
+  const usersByDate = {};
+  users.forEach(u => {
+    if (!u.created_at) return;
+    const dateStr = new Date(u.created_at).toISOString().split('T')[0];
+    usersByDate[dateStr] = (usersByDate[dateStr] || 0) + 1;
+  });
+  let cumulativeUsers = 0;
+  const areaData = Object.keys(usersByDate).sort().map(dateStr => {
+    cumulativeUsers += usersByDate[dateStr];
+    return { date: new Date(dateStr).getTime(), value: cumulativeUsers };
+  });
+
+  const diffCounts = {};
+  allExercises.forEach(ex => {
+    const d = ex.difficulty || 'beginner';
+    diffCounts[d] = (diffCounts[d] || 0) + 1;
+  });
+  const diffMap = { 'beginner': 'Principiante', 'intermediate': 'Intermedio', 'advanced': 'Avanzado', 'PRINCIPIANTE': 'Principiante', 'INTERMEDIO': 'Intermedio', 'AVANZADO': 'Avanzado' };
+  const funnelData = Object.keys(diffCounts).map(d => ({ category: diffMap[d] || d, value: diffCounts[d] })).sort((a,b) => b.value - a.value);
+
+  const rtCounts = {};
+  allRoutines.forEach(rt => {
+    const c = rt.category || 'full_body';
+    rtCounts[c] = (rtCounts[c] || 0) + 1;
+  });
+  const rtCatLabels = { 'upper': 'Tren superior', 'lower': 'Tren inferior', 'core': 'Core', 'full_body': 'Cuerpo completo', 'cardio': 'Cardio', 'mobility': 'Movilidad' };
+  const rtCatData = Object.keys(rtCounts).map(c => ({ name: rtCatLabels[c] || c, count: rtCounts[c] }));
+
+  const dbChartData = [
+    { name: 'Usuarios', count: dbMetrics.users, fill: '#60a5fa' },
+    { name: 'Ejercicios', count: dbMetrics.exercises, fill: '#34d399' },
+    { name: 'Rutinas', count: dbMetrics.routines, fill: '#a78bfa' },
+    { name: 'Restricciones', count: dbMetrics.restrictions, fill: '#fbbf24' }
+  ];
+
   const TABS = [
     { id:'create-exercise', icon:<Plus size={16} weight="bold" />, label:'Nuevo ejercicio' },
     { id:'create-routine', icon:<Notebook size={16} weight="bold" />, label:'Nueva rutina' },
@@ -447,43 +974,49 @@ export default function Admin() {
     { id:'catalogue-ex', icon:<BookOpen size={16} weight="bold" />, label:'Catálogo ejercicios' },
     { id:'catalogue-rt', icon:<Eye size={16} weight="bold" />, label:'Catálogo rutinas' },
     { id:'users', icon:<Users size={16} weight="bold" />, label:'Usuarios' },
+    { id:'db-dashboard', icon:<Database size={16} weight="bold" />, label:'Dashboard DB' },
     { id:'churn', icon:<HeartBreak size={16} weight="bold" />, label:'Deserción (IA)' },
     { id:'anomalies', icon:<Pulse size={16} weight="bold" />, label:'Anomalías (IA)' },
   ];
 
-  // Catálogo completo
-  const allExercises = exercises || [];
-  const allRoutines = routines || [];
 
   return (
     <div className="admin-page">
+      {/* ── Header ── */}
+      <div className="admin-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="admin-logo" style={{ margin: 0 }}><Barbell size={28} weight="bold" /> <span>maxercise</span></div>
+          <h1 style={{ margin: 0, fontSize: '1.2rem', borderLeft: '1px solid rgba(255,255,255,0.3)', paddingLeft: '1rem' }}>Panel de Administrador</h1>
+        </div>
+
+        <div style={{ display:'flex', gap:'0.5rem', flexWrap:'wrap' }}>
+          <Link to="/home" className="btn btn-ghost btn-sm" style={{color:'white', borderColor:'rgba(255,255,255,0.3)'}}>
+            <House size={14} weight="bold" /> Inicio
+          </Link>
+          <Link to="/exercises" className="btn btn-ghost btn-sm" style={{color:'white', borderColor:'rgba(255,255,255,0.3)'}}>
+            <Barbell size={14} weight="bold" /> Ejercicios
+          </Link>
+          <Link to="/routines" className="btn btn-ghost btn-sm" style={{color:'white', borderColor:'rgba(255,255,255,0.3)'}}>
+            <ListBullets size={14} weight="bold" /> Rutinas
+          </Link>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem' }}>
+            Sesión: <strong>{currentUser?.name}</strong> <span style={{color:'rgba(255,255,255,0.7)', fontSize:'0.75rem'}}>({currentUser?.role})</span>
+          </p>
+          <button className="admin-logout-btn" onClick={handleLogout} style={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}>
+            <SignOut size={15} weight="bold" /> Salir
+          </button>
+        </div>
+      </div>
+
       {/* ── Breadcrumbs ── */}
       <div className="admin-breadcrumbs">
         <div className="admin-breadcrumbs-inner">
           <Link to="/" className="admin-bc-link"><House size={14} weight="bold" /> Inicio</Link>
           <CaretRight size={12} className="admin-bc-sep" />
           <span className="admin-bc-current">Panel de Administrador</span>
-        </div>
-        <button className="admin-logout-btn" onClick={handleLogout}>
-          <SignOut size={15} weight="bold" /> Cerrar sesión
-        </button>
-      </div>
-
-      {/* ── Header ── */}
-      <div className="admin-header">
-        <div className="admin-logo"><Barbell size={28} weight="bold" /> <span>maxercise</span></div>
-        <h1>Panel de Administrador</h1>
-        <p>Sesión como <strong>{currentUser?.name}</strong> · Rol: <span style={{color:'rgba(255,255,255,0.7)'}}>{currentUser?.role}</span></p>
-        <div style={{marginTop:'0.75rem', display:'flex', gap:'0.5rem', justifyContent:'center', flexWrap:'wrap'}}>
-          <Link to="/home" className="btn btn-ghost btn-sm" style={{color:'white', borderColor:'rgba(255,255,255,0.3)'}}>
-            <House size={14} weight="bold" /> Ir al inicio
-          </Link>
-          <Link to="/exercises" className="btn btn-ghost btn-sm" style={{color:'white', borderColor:'rgba(255,255,255,0.3)'}}>
-            <Barbell size={14} weight="bold" /> Ver ejercicios
-          </Link>
-          <Link to="/routines" className="btn btn-ghost btn-sm" style={{color:'white', borderColor:'rgba(255,255,255,0.3)'}}>
-            <ListBullets size={14} weight="bold" /> Ver rutinas
-          </Link>
         </div>
       </div>
 
@@ -962,6 +1495,78 @@ export default function Admin() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ── DASHBOARD DB ── */}
+          {tab === 'db-dashboard' && (
+            <div>
+              <h2><Database size={18} weight="bold" /> Dashboard de Base de Datos</h2>
+              <p style={{color:'var(--text-muted)',fontSize:'0.85rem',marginBottom:'1rem'}}>
+                Monitorea en tiempo real el estado de la base de datos y gestiona el poblado de datos (Seed).
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+                <button className="btn btn-primary" onClick={handleSeed} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1rem' }}>
+                  <Database size={24} />
+                  <span>Poblar Base de Datos</span>
+                </button>
+                <button className="btn btn-danger" onClick={handleClean} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1rem' }}>
+                  <Broom size={24} />
+                  <span>Limpiar Tablas</span>
+                </button>
+                <button className="btn btn-secondary" onClick={handleExportCsv} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1rem' }}>
+                  <DownloadSimple size={24} />
+                  <span>Exportar CSV</span>
+                </button>
+                <label className="btn btn-secondary" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '1rem', cursor: 'pointer', margin: 0 }}>
+                  <UploadSimple size={24} />
+                  <span>Importar CSV</span>
+                  <input type="file" accept=".csv" style={{ display: 'none' }} onChange={handleImportCsv} />
+                </label>
+              </div>
+
+              {seedProgress && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'white', border: '1px solid var(--gray-200)', padding: '1.5rem', borderRadius: 'var(--radius-md)', marginBottom: '2rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--blue-primary)', fontSize: '1.1rem' }}>{seedProgress.message}</span>
+                  </div>
+                  <AmChartsGauge value={seedProgress.percent} />
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem' }}>
+                <div style={{ background: 'white', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
+                  <h3 style={{ marginBottom: '1rem', fontSize: '1rem', color: 'var(--gray-800)' }}>Totales por Entidad</h3>
+                  <AmChartsBar data={dbChartData} />
+                </div>
+                <div style={{ background: 'white', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
+                  <h3 style={{ marginBottom: '1rem', fontSize: '1rem', color: 'var(--gray-800)' }}>Distribución de Datos</h3>
+                  <AmChartsPie data={dbChartData} id="am5-pie-chart-1" />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem', marginTop: '2rem' }}>
+                <div style={{ background: 'white', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
+                  <h3 style={{ marginBottom: '1rem', fontSize: '1rem', color: 'var(--gray-800)' }}>Tipos de Cuerpo (Radar)</h3>
+                  <AmChartsRadar data={radarData} />
+                </div>
+                <div style={{ background: 'white', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
+                  <h3 style={{ marginBottom: '1rem', fontSize: '1rem', color: 'var(--gray-800)' }}>Niveles de Ejercicios (Embudo)</h3>
+                  <AmChartsFunnel data={funnelData} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem', marginTop: '2rem' }}>
+                <div style={{ background: 'white', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
+                  <h3 style={{ marginBottom: '1rem', fontSize: '1rem', color: 'var(--gray-800)' }}>Categorías de Rutinas</h3>
+                  <AmChartsPie data={rtCatData} id="am5-pie-chart-2" />
+                </div>
+                <div style={{ background: 'white', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
+                  <h3 style={{ marginBottom: '1rem', fontSize: '1rem', color: 'var(--gray-800)' }}>Crecimiento de Usuarios (Timeline)</h3>
+                  <AmChartsArea data={areaData} />
+                </div>
+              </div>
             </div>
           )}
 

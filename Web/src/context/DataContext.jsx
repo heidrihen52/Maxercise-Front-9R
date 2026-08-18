@@ -43,8 +43,8 @@ export function DataProvider({ children }) {
       if (!token) return; // Don't fetch if not logged in
 
       const [exData, rtData, musclesData] = await Promise.all([
-        exercisesAPI.getAll(),
-        routinesAPI.getAll(),
+        exercisesAPI.getAll({ limit: 1000 }),
+        routinesAPI.getAll({ limit: 1000 }),
         musclesAPI.getAll().catch(() => ({ data: [] })),
       ]);
 
@@ -95,7 +95,7 @@ export function DataProvider({ children }) {
           createdBy: ex.author_id || ex.createdBy,
           muscleGroup: mgId,
           bodyArea,
-          difficulty: 'beginner',
+          difficulty: ex.difficulty || 'beginner',
           image: ex.media?.find(m => m.type === 'THUMBNAIL')?.url || '',
           restrictions: (ex.exercise_restrictions || []).map(er => 
             normalizeRestriction(er.restriction?.name)
@@ -220,7 +220,7 @@ export function DataProvider({ children }) {
       exercises, routines, metadata,
       toggleFavorite, isFavorite,
       saveAdminItem, deleteAdminItem, updateAdminItem,
-      loadFavorites,
+      loadFavorites, loadContent,
     }}>
       {children}
     </DataContext.Provider>

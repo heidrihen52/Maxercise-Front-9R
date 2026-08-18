@@ -27,7 +27,8 @@ import com.example.maxercisemovil.ui.components.PrimaryGradientButton
 fun LoginScreen(
     viewModel: LoginViewModel,
     onLoginSuccess: () -> Unit,
-    onNavigateToRegister: () -> Unit
+    onNavigateToRegister: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var email by remember { mutableStateOf("") }
@@ -118,6 +119,10 @@ fun LoginScreen(
 
                 TextButton(onClick = onNavigateToRegister) {
                     Text("¿No tienes cuenta? Regístrate", color = BluePrimary)
+                }
+                
+                TextButton(onClick = onNavigateToForgotPassword) {
+                    Text("¿Olvidaste tu contraseña?", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }

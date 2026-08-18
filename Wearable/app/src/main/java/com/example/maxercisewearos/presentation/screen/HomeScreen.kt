@@ -35,6 +35,7 @@ import com.example.maxercisewearos.presentation.viewmodel.HomeViewModel
 fun HomeScreen(
     viewModel: HomeViewModel,
     onStartWorkout: () -> Unit,
+    onNavigateToFavorites: () -> Unit,
     userId: Int = 1
 ) {
     val activeRoutine by viewModel.activeRoutine.collectAsStateWithLifecycle()
@@ -318,43 +319,8 @@ fun HomeScreen(
             }
 
             item {
-                ListHeader(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .transformedHeight(this, transformationSpec),
-                    transformation = SurfaceTransformation(transformationSpec)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Favorite,
-                            contentDescription = null,
-                            tint = Color(0xFF0071E3),
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Favoritas",
-                            fontFamily = ComfortaaFont,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            color = Color.White
-                        )
-                    }
-                }
-            }
-
-            items(favorites.take(5).size) { index ->
-                val routine = favorites[index]
                 Button(
-                    onClick = {
-                        viewModel.selectFavoriteRoutine(userId, routine.routine_id) {
-                            onStartWorkout()
-                        }
-                    },
+                    onClick = onNavigateToFavorites,
                     modifier = Modifier
                         .fillMaxWidth()
                         .transformedHeight(this, transformationSpec),
@@ -371,17 +337,17 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.FitnessCenter,
+                            imageVector = Icons.Filled.Favorite,
                             contentDescription = null,
-                            tint = Color(0xFF2A94FF),
-                            modifier = Modifier.size(14.dp)
+                            tint = Color(0xFF0071E3),
+                            modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = routine.routine?.name ?: "Rutina ${routine.routine_id}",
-                            fontFamily = QuicksandFont,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 13.sp
+                            text = "Mis Favoritos",
+                            fontFamily = ComfortaaFont,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
                         )
                     }
                 }

@@ -45,7 +45,7 @@ class LoginViewModel(
                         authManager.saveRole(loginResponse.user.role ?: "NORMAL")
 
                         // Send JWT to the connected watch via Data Layer
-                        val userId = loginResponse.user.id.toIntOrNull() ?: 1
+                        val userId = loginResponse.user.id
                         authManager.saveUserId(userId)
                         wearableManager.sendAuthToWatch(loginResponse.token, userId)
 

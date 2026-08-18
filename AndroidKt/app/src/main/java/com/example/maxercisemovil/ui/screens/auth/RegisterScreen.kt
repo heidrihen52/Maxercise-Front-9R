@@ -1,43 +1,32 @@
 package com.example.maxercisemovil.ui.screens.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
+import com.example.maxercisemovil.R
 import com.example.maxercisemovil.ui.theme.BluePrimary
-import com.example.maxercisemovil.ui.theme.OffWhite
-
 import com.example.maxercisemovil.ui.components.GlassCard
-import com.example.maxercisemovil.ui.components.MaxerciseTextField
 import com.example.maxercisemovil.ui.components.PrimaryGradientButton
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
     viewModel: RegisterViewModel,
@@ -47,15 +36,15 @@ fun RegisterScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     
     // Form State
-    var firstName by remember { mutableStateOf("") }
-    var lastName by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-    var birthDate by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var bodyType by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var captchaResult by remember { mutableStateOf("") }
     
-    var currentStep by remember { mutableIntStateOf(0) }
+    val captchaA by remember { mutableIntStateOf((1..10).random()) }
+    val captchaB by remember { mutableIntStateOf((1..10).random()) }
+    var localError by remember { mutableStateOf("") }
 
     LaunchedEffect(uiState) {
         if (uiState is RegisterState.Success) {
@@ -66,207 +55,223 @@ fun RegisterScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center
+            .background(Color(0xFF0F2C59)) // Dark blue background mimicking the web app auth-bg
     ) {
-        GlassCard(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            isDark = false
+                .fillMaxSize()
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+            // White card containing the form
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                color = Color.White
             ) {
-                // Header
-                Text(
-                    text = if (currentStep == 0) "Crear Cuenta" else "Tu Tipo de Cuerpo",
-                    style = MaterialTheme.typography.displayLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = if (currentStep == 0) "Paso 1 de 2: Información Básica" else "Paso 2 de 2: Conocer tu somatotipo nos ayuda a recomendarte mejor",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-
-                if (currentStep == 0) {
-                    BasicInfoStep(
-                        firstName = firstName, onFirstNameChange = { firstName = it },
-                        lastName = lastName, onLastNameChange = { lastName = it },
-                        phone = phone, onPhoneChange = { phone = it },
-                        birthDate = birthDate, onBirthDateChange = { birthDate = it },
-                        email = email, onEmailChange = { email = it },
-                        password = password, onPasswordChange = { password = it },
-                        onNext = { currentStep = 1 },
-                        onNavigateToLogin = onNavigateToLogin
-                    )
-                } else {
-                    BodyTypeStep(
-                        selectedBodyType = bodyType,
-                        onBodyTypeSelected = { bodyType = it },
-                        onBack = { currentStep = 0 },
-                        onSubmit = { viewModel.register(firstName, lastName, email, phone, bodyType, birthDate, password) },
-                        isLoading = uiState is RegisterState.Loading,
-                        error = if (uiState is RegisterState.Error) (uiState as RegisterState.Error).message else null
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun BasicInfoStep(
-    firstName: String, onFirstNameChange: (String) -> Unit,
-    lastName: String, onLastNameChange: (String) -> Unit,
-    phone: String, onPhoneChange: (String) -> Unit,
-    birthDate: String, onBirthDateChange: (String) -> Unit,
-    email: String, onEmailChange: (String) -> Unit,
-    password: String, onPasswordChange: (String) -> Unit,
-    onNext: () -> Unit,
-    onNavigateToLogin: () -> Unit
-) {
-    val scrollState = rememberScrollState()
-    val canProceed = firstName.isNotBlank() && lastName.isNotBlank() && email.isNotBlank() && password.isNotBlank()
-
-    Column(modifier = Modifier.verticalScroll(scrollState)) {
-        MaxerciseTextField(
-            value = firstName, onValueChange = onFirstNameChange, label = "Nombre",
-            leadingIcon = { Icon(androidx.compose.material.icons.Icons.Default.Person, contentDescription = "Nombre") }
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        MaxerciseTextField(
-            value = lastName, onValueChange = onLastNameChange, label = "Apellido",
-            leadingIcon = { Icon(androidx.compose.material.icons.Icons.Default.Person, contentDescription = "Apellido") }
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        MaxerciseTextField(
-            value = email, onValueChange = onEmailChange, label = "Correo Electrónico",
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            leadingIcon = { Icon(androidx.compose.material.icons.Icons.Default.Email, contentDescription = "Email") }
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        MaxerciseTextField(
-            value = phone, onValueChange = onPhoneChange, label = "Teléfono",
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-            leadingIcon = { Icon(androidx.compose.material.icons.Icons.Default.Phone, contentDescription = "Teléfono") }
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        MaxerciseTextField(
-            value = birthDate, onValueChange = onBirthDateChange, label = "Fecha de Nacimiento (YYYY-MM-DD)",
-            leadingIcon = { Icon(androidx.compose.material.icons.Icons.Default.DateRange, contentDescription = "Fecha de Nacimiento") }
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        MaxerciseTextField(
-            value = password, onValueChange = onPasswordChange, label = "Contraseña",
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            leadingIcon = { Icon(androidx.compose.material.icons.Icons.Default.Lock, contentDescription = "Password") }
-        )
-        
-        Spacer(modifier = Modifier.height(24.dp))
-
-        PrimaryGradientButton(
-            text = "Siguiente",
-            onClick = onNext,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = canProceed
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        TextButton(onClick = onNavigateToLogin, modifier = Modifier.fillMaxWidth()) {
-            Text("¿Ya tienes cuenta? Inicia Sesión", color = BluePrimary)
-        }
-    }
-}
-
-@Composable
-fun BodyTypeStep(
-    selectedBodyType: String,
-    onBodyTypeSelected: (String) -> Unit,
-    onBack: () -> Unit,
-    onSubmit: () -> Unit,
-    isLoading: Boolean,
-    error: String?
-) {
-    val bodyTypes = listOf(
-        Pair("ECTOMORFO", "Contextura delgada, dificultad para ganar peso"),
-        Pair("MESOMORFO", "Contextura atlética, facilidad para ganar músculo"),
-        Pair("ENDOMORFO", "Contextura robusta, facilidad para ganar peso")
-    )
-    
-    Column {
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(1),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.heightIn(max = 300.dp)
-        ) {
-            items(bodyTypes) { type ->
-                val isSelected = selectedBodyType == type.first
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (isSelected) BluePrimary.copy(alpha = 0.1f) else Color.Transparent)
-                        .border(
-                            width = if (isSelected) 2.dp else 1.dp,
-                            color = if (isSelected) BluePrimary else MaterialTheme.colorScheme.outlineVariant,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .clickable { onBodyTypeSelected(type.first) }
-                        .padding(16.dp)
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column {
-                        Text(type.first, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                        Text(type.second, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    if (isSelected) {
+                    // Logo Header
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    ) {
                         Icon(
-                            Icons.Default.CheckCircle, 
-                            contentDescription = "Selected",
+                            painter = painterResource(id = android.R.drawable.ic_menu_agenda), // Placeholder for barbell
+                            contentDescription = "Logo",
                             tint = BluePrimary,
-                            modifier = Modifier.align(Alignment.CenterEnd)
+                            modifier = Modifier.size(32.dp).padding(end = 8.dp)
+                        )
+                        Text(
+                            text = "maxercise",
+                            style = MaterialTheme.typography.displayLarge.copy(fontSize = 32.sp),
+                            color = Color(0xFF1E293B),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    
+                    // Title
+                    Text(
+                        text = "Crea tu cuenta",
+                        style = MaterialTheme.typography.displayLarge.copy(fontSize = 28.sp),
+                        color = Color(0xFF1E293B),
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Comienza gratis y personaliza tu experiencia",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF64748B),
+                        textAlign = TextAlign.Center
+                    )
+                    
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    val combinedError = localError.ifEmpty { 
+                        if (uiState is RegisterState.Error) (uiState as RegisterState.Error).message else "" 
+                    }
+                    if (combinedError.isNotEmpty()) {
+                        Text(
+                            text = combinedError,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(bottom = 16.dp).align(Alignment.Start)
+                        )
+                    }
+
+                    // Fields
+                    RegisterField(
+                        label = "Nombre completo",
+                        value = name,
+                        onValueChange = { name = it },
+                        placeholder = "Tu nombre"
+                    )
+
+                    RegisterField(
+                        label = "Correo electrónico",
+                        value = email,
+                        onValueChange = { email = it },
+                        placeholder = "tu@correo.com",
+                        keyboardType = KeyboardType.Email
+                    )
+
+                    RegisterField(
+                        label = "Contraseña",
+                        value = password,
+                        onValueChange = { password = it },
+                        placeholder = "Mín. 6 caracteres, 1 mayúscula, 1 número, 1 esp",
+                        isPassword = true
+                    )
+
+                    RegisterField(
+                        label = "Confirmar contraseña",
+                        value = confirmPassword,
+                        onValueChange = { confirmPassword = it },
+                        placeholder = "Repite tu contraseña",
+                        isPassword = true
+                    )
+
+                    RegisterField(
+                        label = "Verificación humana: ¿Cuánto es $captchaA + $captchaB?",
+                        value = captchaResult,
+                        onValueChange = { captchaResult = it },
+                        placeholder = "Resultado",
+                        keyboardType = KeyboardType.Number
+                    )
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Submit Button
+                    val isLoading = uiState is RegisterState.Loading
+                    Button(
+                        onClick = {
+                            localError = ""
+                            if (password != confirmPassword) {
+                                localError = "Las contraseñas no coinciden"
+                                return@Button
+                            }
+                            if (captchaResult.toIntOrNull() != (captchaA + captchaB)) {
+                                localError = "La suma de verificación humana es incorrecta."
+                                return@Button
+                            }
+                            // Call ViewModel with dummy values for missing Prisma fields
+                            // Split name into first and last
+                            val parts = name.trim().split(" ")
+                            val firstName = parts.firstOrNull() ?: ""
+                            val lastName = if (parts.size > 1) parts.drop(1).joinToString(" ") else "N/A"
+                            viewModel.register(
+                                firstName = firstName,
+                                lastName = lastName,
+                                email = email,
+                                phone = "00000000",
+                                bodyType = "ECTOMORFO",
+                                birthDate = "1990-01-01",
+                                password = password
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(25.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = BluePrimary),
+                        enabled = !isLoading
+                    ) {
+                        Text(
+                            text = if (isLoading) "Creando cuenta..." else "Crear cuenta y comenzar →",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Footer
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "¿Ya tienes cuenta? ",
+                            color = Color(0xFF64748B),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = "Iniciar sesión",
+                            color = BluePrimary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.clickable { onNavigateToLogin() }
                         )
                     }
                 }
             }
         }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        if (error != null) {
-            Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            Spacer(modifier = Modifier.height(8.dp))
-        }
+    }
+}
 
-        Row(
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RegisterField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    isPassword: Boolean = false,
+    keyboardType: KeyboardType = KeyboardType.Text
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color(0xFF475569),
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = { Text(placeholder, color = Color(0xFFA0AABF)) },
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            OutlinedButton(
-                onClick = onBack,
-                modifier = Modifier.weight(1f).height(50.dp),
-                shape = RoundedCornerShape(25.dp)
-            ) {
-                Text("Atrás")
-            }
-            
-            if (isLoading) {
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = BluePrimary, modifier = Modifier.size(24.dp))
-                }
-            } else {
-                PrimaryGradientButton(
-                    text = "Finalizar",
-                    onClick = onSubmit,
-                    modifier = Modifier.weight(1f),
-                    enabled = selectedBodyType.isNotBlank()
-                )
-            }
-        }
+            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            visualTransformation = if (isPassword) PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = BluePrimary,
+                unfocusedBorderColor = Color(0xFFCBD5E1),
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+            ),
+            singleLine = true
+        )
     }
 }

@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
             }
             if (authManager.getRole() == "SUPER") Screen.Admin.route else Screen.Home.route
         } else {
-            Screen.Login.route
+            Screen.Landing.route
         }
         
         setContent {

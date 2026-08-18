@@ -57,8 +57,9 @@ export const authAPI = {
 // EXERCISES
 export const exercisesAPI = {
   getAll: (filters = {}) => {
-    const params = new URLSearchParams(filters).toString();
-    return request('GET', `/exercises${params ? '?' + params : ''}`);
+    const params = new URLSearchParams(filters);
+    params.append('_t', Date.now());
+    return request('GET', `/exercises?${params.toString()}`);
   },
   create: (data) => request('POST', '/exercises', data),
   update: (id, data) => request('PUT', `/exercises/${id}`, data),
@@ -69,8 +70,9 @@ export const exercisesAPI = {
 // ROUTINES
 export const routinesAPI = {
   getAll: (filters = {}) => {
-    const params = new URLSearchParams(filters).toString();
-    return request('GET', `/routines${params ? '?' + params : ''}`);
+    const params = new URLSearchParams(filters);
+    params.append('_t', Date.now());
+    return request('GET', `/routines?${params.toString()}`);
   },
   create: (data) => request('POST', '/routines', data),
   update: (id, data) => request('PUT', `/routines/${id}`, data),
@@ -86,7 +88,41 @@ export const profileAPI = {
 
 // ADMIN
 export const adminAPI = {
-  getUsers: () => request('GET', '/users'),
+  getUsers: () => request('GET', '/users?limit=1000'),
+  getMetrics: () => request('GET', '/seed/metrics'),
+  seed: (options) => request('POST', '/seed', options),
+  clean: () => request('DELETE', '/clean'),
+  exportCsv: async () => {
+    const token = getToken();
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${BASE_URL}/export-csv`, { headers });
+    if (!res.ok) throw new Error('Error al exportar CSV');
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'users_export.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  },
+  importCsv: async (file) => {
+    const token = getToken();
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(`${BASE_URL}/import-csv`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || data.error || `Error ${res.status}`);
+    return data.data !== undefined ? data.data : data;
+  },
 };
 
 // RESTRICTIONS (from backend catalog)

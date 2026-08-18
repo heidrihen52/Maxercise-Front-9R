@@ -1,0 +1,283 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    Int                    @id @default(autoincrement())
+  first_name            String
+  last_name             String
+  email                 String                 @unique
+  phone_number          String
+  password              String
+  role                  Role
+  body_type             Body?
+  birth_date            DateTime
+  created_at            DateTime               @default(now())
+  updated_at            DateTime               @updatedAt
+  status                Boolean                @default(true)
+  exercises             Exercise[]
+  exercise_muscles      ExerciseMuscles[]
+  exercise_restrictions ExerciseRestrictions[]
+  muscles               Muscle[]
+  muscle_groups         MuscleGroups[]
+  restrictions          Restriction[]
+  routines              Routine[]
+  routine_exercises     RoutineExercise[]
+  active_routine        UserActiveRoutine?
+  favorite_exercises    UserFavoriteExercise[]
+  favorite_routines     UserFavoriteRoutine[]
+  user_restrictions     UserRestrictions[]
+  workout_logs          WorkoutLog[]
+}
+
+model Exercise {
+  id                    Int                    @id @default(autoincrement())
+  title                 String
+  description           String
+  instructions          String
+  author_id             Int
+  created_at            DateTime               @default(now())
+  updated_at            DateTime               @updatedAt
+  status                Boolean                @default(true)
+  difficulty            Difficulty             @default(PRINCIPIANTE)
+  author                User                   @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  exercise_muscles      ExerciseMuscles[]
+  exercise_restrictions ExerciseRestrictions[]
+  media                 Media[]
+  routines              RoutineExercise[]
+  user_favorites        UserFavoriteExercise[]
+
+  @@index([author_id], map: "Exercise_author_id_fkey")
+}
+
+model Media {
+  id          Int       @id @default(autoincrement())
+  type        MediaType
+  url         String    @db.VarChar(500)
+  exercise_id Int?
+  routine_id  Int?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  exercise    Exercise? @relation(fields: [exercise_id], references: [id], onDelete: Cascade)
+  routine     Routine?  @relation(fields: [routine_id], references: [id], onDelete: Cascade)
+
+  @@index([exercise_id], map: "Media_exercise_id_fkey")
+  @@index([routine_id], map: "Media_routine_id_fkey")
+}
+
+model Routine {
+  id             Int                   @id @default(autoincrement())
+  title          String
+  description    String?
+  difficulty     Difficulty
+  body_type      Body
+  author_id      Int
+  created_at     DateTime              @default(now())
+  updated_at     DateTime              @updatedAt
+  status         Boolean               @default(true)
+  media          Media[]
+  author         User                  @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  exercises      RoutineExercise[]
+  user_actives   UserActiveRoutine[]
+  user_favorites UserFavoriteRoutine[]
+  workout_logs   WorkoutLog[]
+
+  @@index([author_id], map: "Routine_author_id_fkey")
+}
+
+model RoutineExercise {
+  id          Int      @id @default(autoincrement())
+  reps        Int
+  sets        Int
+  day_number  Int      @default(1)
+  order       Int      @default(1)
+  routine_id  Int
+  exercise_id Int
+  author_id   Int
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  status      Boolean  @default(true)
+  author      User     @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  exercise    Exercise @relation(fields: [exercise_id], references: [id], onDelete: Cascade)
+  routine     Routine  @relation(fields: [routine_id], references: [id], onDelete: Cascade)
+
+  @@index([author_id], map: "RoutineExercise_author_id_fkey")
+  @@index([exercise_id], map: "RoutineExercise_exercise_id_fkey")
+  @@index([routine_id], map: "RoutineExercise_routine_id_fkey")
+}
+
+model Muscle {
+  id               Int               @id @default(autoincrement())
+  name             String            @unique
+  description      String            @unique
+  muscle_group_id  Int?
+  author_id        Int?
+  created_at       DateTime          @default(now())
+  updated_at       DateTime          @updatedAt
+  status           Boolean           @default(true)
+  muscle_exercises ExerciseMuscles[]
+  author           User?             @relation(fields: [author_id], references: [id])
+  muscle_group     MuscleGroups?     @relation(fields: [muscle_group_id], references: [id])
+
+  @@index([author_id], map: "Muscle_author_id_fkey")
+  @@index([muscle_group_id], map: "Muscle_muscle_group_id_fkey")
+}
+
+model MuscleGroups {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String   @unique
+  author_id   Int?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  status      Boolean  @default(true)
+  muscles     Muscle[]
+  author      User?    @relation(fields: [author_id], references: [id])
+
+  @@index([author_id], map: "MuscleGroups_author_id_fkey")
+}
+
+model Restriction {
+  id                    Int                    @id @default(autoincrement())
+  name                  String                 @unique
+  description           String                 @unique
+  author_id             Int?                   @default(1)
+  created_at            DateTime               @default(now())
+  updated_at            DateTime               @updatedAt
+  status                Boolean                @default(true)
+  exercise_restrictions ExerciseRestrictions[]
+  author                User?                  @relation(fields: [author_id], references: [id])
+  user_restrictions     UserRestrictions[]
+
+  @@index([author_id], map: "Restriction_author_id_fkey")
+}
+
+model ExerciseRestrictions {
+  id             Int         @id @default(autoincrement())
+  exercise_id    Int
+  restriction_id Int
+  author_id      Int
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
+  status         Boolean     @default(true)
+  author         User        @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  exercise       Exercise    @relation(fields: [exercise_id], references: [id], onDelete: Cascade)
+  restriction    Restriction @relation(fields: [restriction_id], references: [id], onDelete: Cascade)
+
+  @@index([author_id], map: "ExerciseRestrictions_author_id_fkey")
+  @@index([exercise_id], map: "ExerciseRestrictions_exercise_id_fkey")
+  @@index([restriction_id], map: "ExerciseRestrictions_restriction_id_fkey")
+}
+
+model ExerciseMuscles {
+  id          Int      @id @default(autoincrement())
+  exercise_id Int
+  muscle_id   Int
+  author_id   Int
+  author      User     @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  exercise    Exercise @relation(fields: [exercise_id], references: [id], onDelete: Cascade)
+  muscle      Muscle   @relation(fields: [muscle_id], references: [id], onDelete: Cascade)
+
+  @@index([author_id], map: "ExerciseMuscles_author_id_fkey")
+  @@index([exercise_id], map: "ExerciseMuscles_exercise_id_fkey")
+  @@index([muscle_id], map: "ExerciseMuscles_muscle_id_fkey")
+}
+
+model UserRestrictions {
+  id             Int         @id @default(autoincrement())
+  user_id        Int
+  restriction_id Int
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
+  status         Boolean     @default(true)
+  restriction    Restriction @relation(fields: [restriction_id], references: [id], onDelete: Cascade)
+  user           User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([restriction_id], map: "UserRestrictions_restriction_id_fkey")
+  @@index([user_id], map: "UserRestrictions_user_id_fkey")
+}
+
+model UserFavoriteRoutine {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  routine_id Int
+  created_at DateTime @default(now())
+  routine    Routine  @relation(fields: [routine_id], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, routine_id])
+  @@index([routine_id], map: "UserFavoriteRoutine_routine_id_fkey")
+}
+
+model UserFavoriteExercise {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  exercise_id Int
+  created_at  DateTime @default(now())
+  exercise    Exercise @relation(fields: [exercise_id], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, exercise_id])
+  @@index([exercise_id], map: "UserFavoriteExercise_exercise_id_fkey")
+}
+
+model UserActiveRoutine {
+  id                 Int      @id @default(autoincrement())
+  user_id            Int      @unique
+  routine_id         Int
+  start_date         DateTime @default(now())
+  last_completed_day Int      @default(0)
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+  routine            Routine  @relation(fields: [routine_id], references: [id], onDelete: Cascade)
+  user               User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([routine_id], map: "UserActiveRoutine_routine_id_fkey")
+}
+
+model WorkoutLog {
+  id             Int      @id @default(autoincrement())
+  user_id        Int
+  routine_id     Int?
+  day_number     Int
+  started_at     DateTime
+  completed_at   DateTime @default(now())
+  duration_sec   Int?
+  calories       Int?
+  avg_heart_rate Int?
+  max_heart_rate Int?
+  routine        Routine? @relation(fields: [routine_id], references: [id])
+  user           User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, completed_at])
+  @@index([routine_id], map: "WorkoutLog_routine_id_fkey")
+}
+
+enum Role {
+  NORMAL
+  SUSCRIPTION
+  SUPER
+}
+
+enum Difficulty {
+  PRINCIPIANTE
+  INTERMEDIO
+  AVANZADO
+}
+
+enum Body {
+  ECTOMORFO
+  MESOMORFO
+  ENDOMORFO
+}
+
+enum MediaType {
+  THUMBNAIL
+  CONTENT
+  YOUTUBE
+}

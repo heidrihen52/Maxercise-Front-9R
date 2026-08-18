@@ -12,6 +12,7 @@ class HomeViewModel(private val repository: WorkoutRepository) : ViewModel() {
 
     val activeRoutine = repository.activeRoutine.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     val favoriteRoutines = repository.favoriteRoutines.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val favoriteExercises = repository.favoriteExercises.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val availableDays = repository.availableDays.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val activeSession = repository.activeSession.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     val loadState = repository.loadState.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), LoadState.Idle)

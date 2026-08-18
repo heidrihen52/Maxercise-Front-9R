@@ -33,6 +33,12 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
             modelClass.isAssignableFrom(com.example.maxercisemovil.ui.screens.users.AdminUsersViewModel::class.java) -> {
                 com.example.maxercisemovil.ui.screens.users.AdminUsersViewModel(apiService) as T
             }
+            modelClass.isAssignableFrom(com.example.maxercisemovil.ui.screens.favorites.FavoritesViewModel::class.java) -> {
+                com.example.maxercisemovil.ui.screens.favorites.FavoritesViewModel(apiService) as T
+            }
+            modelClass.isAssignableFrom(com.example.maxercisemovil.ui.screens.home.HomeViewModel::class.java) -> {
+                com.example.maxercisemovil.ui.screens.home.HomeViewModel(apiService) as T
+            }
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
     }

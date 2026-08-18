@@ -20,6 +20,7 @@ import com.example.maxercisewearos.presentation.screen.HomeScreen
 import com.example.maxercisewearos.presentation.screen.LinkScreen
 import com.example.maxercisewearos.presentation.screen.TimerScreen
 import com.example.maxercisewearos.presentation.screen.SummaryScreen
+import com.example.maxercisewearos.presentation.screen.FavoritesScreen
 import com.example.maxercisewearos.presentation.theme.MaxerciseWearOSTheme
 import com.example.maxercisewearos.presentation.viewmodel.HomeViewModel
 import com.example.maxercisewearos.presentation.viewmodel.TimerViewModel
@@ -30,13 +31,14 @@ import kotlinx.serialization.Serializable
 @Serializable object ExerciseDestination : NavKey
 @Serializable object TimerDestination : NavKey
 @Serializable object SummaryDestination : NavKey
+@Serializable object FavoritesDestination : NavKey
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Local Node.js Backend URL (using 127.0.0.1 for adb reverse tunnel)
-        val baseUrl = "http://127.0.0.1:3000/"
+        // Local Node.js Backend URL (10.0.2.2 is the host's localhost in Android Emulator)
+        val baseUrl = "http://10.0.2.2:3000/"
         val repository = WorkoutRepository.create(baseUrl, applicationContext)
         val tokenManager = TokenManager(applicationContext)
 
@@ -73,6 +75,7 @@ fun WearApp(repository: WorkoutRepository, tokenManager: TokenManager) {
                                 HomeScreen(
                                     viewModel = homeViewModel,
                                     onStartWorkout = { backStack.add(ExerciseDestination) },
+                                    onNavigateToFavorites = { backStack.add(FavoritesDestination) },
                                     userId = userId
                                 )
                             }
@@ -103,6 +106,11 @@ fun WearApp(repository: WorkoutRepository, tokenManager: TokenManager) {
                                         backStack.clear()
                                         backStack.add(HomeDestination)
                                     }
+                                )
+                            }
+                            is FavoritesDestination -> NavEntry(key) {
+                                FavoritesScreen(
+                                    viewModel = homeViewModel
                                 )
                             }
                             else -> NavEntry(key) { }

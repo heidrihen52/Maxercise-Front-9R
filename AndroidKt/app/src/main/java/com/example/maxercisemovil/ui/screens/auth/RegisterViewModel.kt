@@ -42,15 +42,22 @@ class RegisterViewModel(
                 if (response.isSuccessful) {
                     val apiResponse = response.body()
                     if (apiResponse != null && apiResponse.success) {
-                        val registerResponse = apiResponse.data
-                        authManager.saveToken(registerResponse.token)
-                        authManager.saveRole(registerResponse.user.role ?: "NORMAL")
                         _uiState.value = RegisterState.Success
                     } else {
                         _uiState.value = RegisterState.Error("Invalid response from server")
                     }
                 } else {
-                    _uiState.value = RegisterState.Error("Registration failed: ${response.message()}")
+                    val errorString = response.errorBody()?.string()
+                    val errorMessage = try {
+                        if (!errorString.isNullOrEmpty()) {
+                            org.json.JSONObject(errorString).getString("message")
+                        } else {
+                            response.message()
+                        }
+                    } catch (e: Exception) {
+                        response.message()
+                    }
+                    _uiState.value = RegisterState.Error(errorMessage)
                 }
             } catch (e: Exception) {
                 _uiState.value = RegisterState.Error(e.localizedMessage ?: "Network error occurred")

@@ -59,6 +59,14 @@ data class UserFavoriteRoutine(
 )
 
 @Serializable
+data class UserFavoriteExercise(
+    val id: Int,
+    val user_id: Int,
+    val exercise_id: Int,
+    val exercise: Exercise? = null
+)
+
+@Serializable
 data class UserRestriction(
     val id: Int,
     val user_id: Int,
@@ -77,6 +85,7 @@ data class SyncData(
     val syncedAt: String,
     val activeRoutine: ActiveRoutinePayload?,
     val favorites: List<FavoriteRoutinePayload>,
+    val favoriteExercises: List<FavoriteExercisePayload> = emptyList(),
     val restrictions: List<RestrictionPayload>
 )
 
@@ -118,6 +127,12 @@ data class FavoriteRoutinePayload(
     val title: String,
     val difficulty: String,
     val bodyType: String
+)
+
+@Serializable
+data class FavoriteExercisePayload(
+    val id: Int,
+    val title: String
 )
 
 @Serializable

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Warning, Eye } from '@phosphor-icons/react';
 import logoCompleto from '../assets/logoCompleto.png';
 import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import './Auth.css';
 
 export function Login() {
@@ -10,6 +11,7 @@ export function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { loadFavorites } = useData();
   const navigate = useNavigate();
 
   const handle = async (e) => {
@@ -26,6 +28,7 @@ export function Login() {
     setLoading(true);
     try {
       const { user, profile } = await login(form.email, form.password);
+      await loadFavorites();
       // Redirect based on role and whether it's a newly registered user
       if (user.role === 'SUPER') {
         navigate('/admin');

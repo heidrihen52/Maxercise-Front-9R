@@ -51,6 +51,9 @@ class WorkoutRepository(private val apiService: ApiService, context: Context) {
     private val _favoriteRoutines = MutableStateFlow<List<UserFavoriteRoutine>>(emptyList())
     val favoriteRoutines: StateFlow<List<UserFavoriteRoutine>> = _favoriteRoutines
 
+    private val _favoriteExercises = MutableStateFlow<List<UserFavoriteExercise>>(emptyList())
+    val favoriteExercises: StateFlow<List<UserFavoriteExercise>> = _favoriteExercises
+
     private val _userRestrictions = MutableStateFlow<List<UserRestriction>>(emptyList())
     val userRestrictions: StateFlow<List<UserRestriction>> = _userRestrictions
 
@@ -134,6 +137,15 @@ class WorkoutRepository(private val apiService: ApiService, context: Context) {
                         user_id = userId,
                         routine_id = fav.id,
                         routine = Routine(id = fav.id, name = fav.title)
+                    )
+                }
+
+                _favoriteExercises.value = syncData.favoriteExercises.map { fav ->
+                    UserFavoriteExercise(
+                        id = fav.id,
+                        user_id = userId,
+                        exercise_id = fav.id,
+                        exercise = Exercise(id = fav.id, name = fav.title)
                     )
                 }
 
