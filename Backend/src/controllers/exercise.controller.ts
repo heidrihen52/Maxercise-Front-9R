@@ -14,7 +14,7 @@ export async function listExercises(req: Request, res: Response, next: NextFunct
 
 export async function createExercise(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { title, description, instructions, muscleIds, restrictions, youtube_url, image } = req.body;
+    const { title, description, instructions, muscleIds, restrictions, youtube_url } = req.body;
 
     if (!title || !description || !instructions) {
       res.status(400).json({ success: false, message: 'title, description e instructions son obligatorios' });
@@ -46,7 +46,6 @@ export async function createExercise(req: Request, res: Response, next: NextFunc
       thumbnail,
       content,
       youtubeUrl: youtube_url,
-      thumbnailUrl: image,
     });
 
     res.status(201).json({ success: true, data: exercise });
@@ -63,7 +62,7 @@ export async function updateExercise(req: Request, res: Response, next: NextFunc
       return;
     }
 
-    const { title, description, instructions, muscleIds, restrictions, youtube_url, image } = req.body;
+    const { title, description, instructions, muscleIds, restrictions, youtube_url } = req.body;
 
     const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
     const thumbnail = files?.thumbnail?.[0];
@@ -91,7 +90,6 @@ export async function updateExercise(req: Request, res: Response, next: NextFunc
         thumbnail,
         content,
         youtubeUrl: youtube_url,
-        thumbnailUrl: image,
       },
       req.user!.id
     );

@@ -17,3 +17,15 @@ export async function seed(req: Request, res: Response, next: NextFunction): Pro
     next(error);
   }
 }
+
+export async function getMetrics(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const metrics = await seedService.getDatabaseMetrics();
+    res.status(200).json({
+      success: true,
+      ...metrics,
+    });
+  } catch (error) {
+    next(error);
+  }
+}

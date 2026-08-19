@@ -13,7 +13,6 @@ export interface CreateExerciseInput {
   thumbnail?: Express.Multer.File;
   content?: Express.Multer.File;
   youtubeUrl?: string;
-  thumbnailUrl?: string;
 }
 
 export interface UpdateExerciseInput {
@@ -25,7 +24,6 @@ export interface UpdateExerciseInput {
   thumbnail?: Express.Multer.File;
   content?: Express.Multer.File;
   youtubeUrl?: string;
-  thumbnailUrl?: string;
 }
 
 export async function getExerciseById(id: number) {
@@ -126,14 +124,6 @@ export async function createExercise(input: CreateExerciseInput) {
       file: input.thumbnail,
       targetType: 'THUMBNAIL',
     });
-  } else if (input.thumbnailUrl) {
-    await prisma.media.create({
-      data: {
-        url: input.thumbnailUrl,
-        type: 'THUMBNAIL',
-        exercise_id: exercise.id,
-      },
-    });
   }
 
   if (input.content || input.youtubeUrl) {
@@ -196,34 +186,6 @@ export async function updateExercise(id: number, input: UpdateExerciseInput, aut
       file: input.thumbnail,
       targetType: 'THUMBNAIL',
     });
-  } else if (input.thumbnailUrl !== undefined) {
-    const existingMedia = await prisma.media.findFirst({
-      where: {
-        exercise_id: id,
-        type: 'THUMBNAIL',
-      },
-    });
-
-    if (input.thumbnailUrl === '') {
-      if (existingMedia) {
-        await prisma.media.delete({ where: { id: existingMedia.id } });
-      }
-    } else {
-      if (existingMedia) {
-        await prisma.media.update({
-          where: { id: existingMedia.id },
-          data: { url: input.thumbnailUrl },
-        });
-      } else {
-        await prisma.media.create({
-          data: {
-            url: input.thumbnailUrl,
-            type: 'THUMBNAIL',
-            exercise_id: id,
-          },
-        });
-      }
-    }
   }
 
   if (input.content || input.youtubeUrl) {

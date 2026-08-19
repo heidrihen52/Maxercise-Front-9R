@@ -24,7 +24,7 @@ export async function getProfile(req: Request, res: Response, next: NextFunction
 export async function updateProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = req.user!.id;
-    const { first_name, last_name, body_type, phone_number, birth_date, restrictions } = req.body;
+    const { first_name, last_name, body_type, phone_number, birth_date } = req.body;
 
     const updatedUser = await userService.updateUserProfile(userId, {
       first_name,
@@ -32,7 +32,6 @@ export async function updateProfile(req: Request, res: Response, next: NextFunct
       phone_number,
       body_type,
       birth_date: birth_date ? new Date(birth_date) : undefined,
-      restrictions,
     });
 
     res.status(200).json({

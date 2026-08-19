@@ -9,9 +9,7 @@
     "start": "node dist/index.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio",
-    "create-admin": "ts-node create-admin.ts",
-    "seed": "ts-node -e \"import { seedDatabase } from './src/services/seed.service'; seedDatabase().then(() => console.log('Base de datos poblada exitosamente')).catch(console.error);\""
+    "prisma:studio": "prisma studio"
   },
   "keywords": [
     "express",

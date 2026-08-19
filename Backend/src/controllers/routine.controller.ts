@@ -32,7 +32,7 @@ export async function listSafeRoutines(
 
 export async function createRoutine(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { title, description, difficulty, body_type, exercises, youtube_url, image, duration, frequency } = req.body;
+    const { title, description, difficulty, body_type, exercises, youtube_url } = req.body;
 
     if (!title || !difficulty || !body_type) {
       res.status(400).json({ success: false, message: 'title, difficulty y body_type son obligatorios' });
@@ -63,9 +63,6 @@ export async function createRoutine(req: Request, res: Response, next: NextFunct
       thumbnail,
       content,
       youtubeUrl: youtube_url,
-      thumbnailUrl: image,
-      duration,
-      frequency,
     });
 
     res.status(201).json({ success: true, data: routine });
@@ -82,7 +79,7 @@ export async function updateRoutine(req: Request, res: Response, next: NextFunct
       return;
     }
 
-    const { title, description, difficulty, body_type, exercises, youtube_url, image, duration, frequency } = req.body;
+    const { title, description, difficulty, body_type, exercises, youtube_url } = req.body;
 
     const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
     const thumbnail = files?.thumbnail?.[0];
@@ -109,9 +106,6 @@ export async function updateRoutine(req: Request, res: Response, next: NextFunct
         thumbnail,
         content,
         youtubeUrl: youtube_url,
-        thumbnailUrl: image,
-        duration,
-        frequency,
       },
       req.user!.id
     );

@@ -9,8 +9,7 @@ export interface CreateRoutineInput {
   description?: string;
   difficulty: Difficulty;
   body_type: Body;
-  duration?: string;
-  frequency?: string;
+  authorId: number;
   exercises?: Array<{
     exercise_id: number;
     reps: number;
@@ -21,8 +20,6 @@ export interface CreateRoutineInput {
   thumbnail?: Express.Multer.File;
   content?: Express.Multer.File;
   youtubeUrl?: string;
-  thumbnailUrl?: string;
-  authorId?: number;
 }
 
 export interface UpdateRoutineInput {
@@ -30,8 +27,6 @@ export interface UpdateRoutineInput {
   description?: string;
   difficulty?: Difficulty;
   body_type?: Body;
-  duration?: string;
-  frequency?: string;
   exercises?: Array<{
     exercise_id: number;
     reps: number;
@@ -42,7 +37,6 @@ export interface UpdateRoutineInput {
   thumbnail?: Express.Multer.File;
   content?: Express.Multer.File;
   youtubeUrl?: string;
-  thumbnailUrl?: string;
 }
 
 export async function listRoutines(userId?: number) {
@@ -52,17 +46,7 @@ export async function listRoutines(userId?: number) {
       media: true,
       exercises: {
         where: { status: true },
-        include: { 
-          exercise: { 
-            include: { 
-              media: true,
-              exercise_restrictions: {
-                where: { status: true },
-                include: { restriction: true }
-              }
-            } 
-          } 
-        },
+        include: { exercise: { include: { media: true } } },
         orderBy: [{ day_number: 'asc' }, { order: 'asc' }],
       },
       author: { select: { id: true, first_name: true, last_name: true } },
@@ -124,10 +108,6 @@ export async function listSafeRoutines(userId: number) {
           exercise: {
             include: {
               media: true,
-              exercise_restrictions: {
-                where: { status: true },
-                include: { restriction: true }
-              }
             },
           },
         },
@@ -179,13 +159,7 @@ export async function getRoutineById(id: number) {
       exercises: {
         include: {
           exercise: {
-            include: { 
-              media: true,
-              exercise_restrictions: {
-                where: { status: true },
-                include: { restriction: true }
-              }
-            }
+            include: { media: true }
           }
         },
         orderBy:[{day_number: 'asc'}, {order: 'asc'}]
@@ -204,9 +178,7 @@ export async function createRoutine(input: CreateRoutineInput) {
       description: input.description,
       difficulty: input.difficulty,
       body_type: input.body_type,
-      duration: input.duration,
-      frequency: input.frequency,
-      author_id: input.authorId!,
+      author_id: input.authorId,
       exercises: input.exercises?.length
         ? {
             create: input.exercises.map((ex, idx) => ({
@@ -215,7 +187,7 @@ export async function createRoutine(input: CreateRoutineInput) {
               sets: ex.sets,
               day_number: ex.day_number ?? 1,
               order: ex.order ?? idx + 1,
-              author_id: input.authorId!,
+              author_id: input.authorId,
             })),
           }
         : undefined,
@@ -227,14 +199,6 @@ export async function createRoutine(input: CreateRoutineInput) {
       routineId: routine.id,
       file: input.thumbnail,
       targetType: 'THUMBNAIL',
-    });
-  } else if (input.thumbnailUrl) {
-    await prisma.media.create({
-      data: {
-        url: input.thumbnailUrl,
-        type: 'THUMBNAIL',
-        routine_id: routine.id,
-      },
     });
   }
 
@@ -261,8 +225,6 @@ export async function updateRoutine(id: number, input: UpdateRoutineInput, autho
       ...(input.description !== undefined && { description: input.description }),
       ...(input.difficulty && { difficulty: input.difficulty }),
       ...(input.body_type && { body_type: input.body_type }),
-      ...(input.duration !== undefined && { duration: input.duration }),
-      ...(input.frequency !== undefined && { frequency: input.frequency }),
     },
   });
   
@@ -291,34 +253,6 @@ export async function updateRoutine(id: number, input: UpdateRoutineInput, autho
       file: input.thumbnail,
       targetType: 'THUMBNAIL',
     });
-  } else if (input.thumbnailUrl !== undefined) {
-    const existingMedia = await prisma.media.findFirst({
-      where: {
-        routine_id: id,
-        type: 'THUMBNAIL',
-      },
-    });
-
-    if (input.thumbnailUrl === '') {
-      if (existingMedia) {
-        await prisma.media.delete({ where: { id: existingMedia.id } });
-      }
-    } else {
-      if (existingMedia) {
-        await prisma.media.update({
-          where: { id: existingMedia.id },
-          data: { url: input.thumbnailUrl },
-        });
-      } else {
-        await prisma.media.create({
-          data: {
-            url: input.thumbnailUrl,
-            type: 'THUMBNAIL',
-            routine_id: id,
-          },
-        });
-      }
-    }
   }
 
   if (input.content || input.youtubeUrl) {

@@ -7,5 +7,6 @@ import { Role } from '@prisma/client';
 const router = Router();
 
 router.post('/', authenticateJWT, requireRole([Role.SUPER]), seedController.seed);
+router.get('/metrics', authenticateJWT, requireRole([Role.SUPER]), seedController.getMetrics);
 
 export default router;
