@@ -7,6 +7,7 @@ import com.example.maxercisewearos.data.sync.TokenManager
 import com.example.maxercisewearos.data.sync.WearableDataLayerService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -204,6 +205,7 @@ class WorkoutRepository(private val apiService: ApiService, context: Context) {
         startedAtTimestamp = sdf.format(java.util.Date(startedAtMillis))
         
         heartRateMonitor.startMonitoring()
+        com.example.maxercisewearos.presentation.component.NotificationHelper.showOngoingWorkoutNotification(appContext)
         
         persistence.saveSession(
             routineId = routineId,
@@ -213,6 +215,14 @@ class WorkoutRepository(private val apiService: ApiService, context: Context) {
             startedAt = startedAtTimestamp
         )
         _activeSession.value = persistence.getSession()
+
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            WearableDataLayerService.sendMessageToPhone(
+                appContext,
+                "/maxercise/workout-started",
+                "routine=$routineId,day=$dayNumber".toByteArray()
+            )
+        }
     }
 
     fun resumeWorkoutSession(session: SavedSession) {
@@ -232,12 +242,14 @@ class WorkoutRepository(private val apiService: ApiService, context: Context) {
         selectDay(session.dayNumber)
         
         heartRateMonitor.startMonitoring()
+        com.example.maxercisewearos.presentation.component.NotificationHelper.showOngoingWorkoutNotification(appContext)
     }
 
     fun clearActiveSession() {
         persistence.clearSession()
         _activeSession.value = null
         heartRateMonitor.stopMonitoring()
+        com.example.maxercisewearos.presentation.component.NotificationHelper.cancelOngoingWorkoutNotification(appContext)
     }
 
     fun nextSeries() {
@@ -261,6 +273,14 @@ class WorkoutRepository(private val apiService: ApiService, context: Context) {
                 startedAt = startedAtTimestamp
             )
             _activeSession.value = persistence.getSession()
+            
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                WearableDataLayerService.sendMessageToPhone(
+                    appContext,
+                    "/maxercise/workout-progress",
+                    "ejercicio=${_currentExerciseIndex.value + 1},serie=${_currentSeries.value}".toByteArray()
+                )
+            }
         }
     }
 
@@ -293,6 +313,18 @@ class WorkoutRepository(private val apiService: ApiService, context: Context) {
         val avgHR = heartRateMonitor.getAverage()
         val maxHR = heartRateMonitor.getMax()
 
+        // Notify the companion phone app that the workout was completed BEFORE attempting the API call
+        // This ensures the phone gets the notification even if the watch has network issues reaching the backend
+        try {
+            WearableDataLayerService.sendMessageToPhone(
+                appContext,
+                "/maxercise/workout-completed",
+                "day=$activeDay,duration=${durationSec / 60}min,cal=$calories".toByteArray()
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         try {
             apiService.completeDay(
                 CompleteDayRequest(
@@ -304,16 +336,10 @@ class WorkoutRepository(private val apiService: ApiService, context: Context) {
                     calories = calories
                 )
             )
-            clearActiveSession()
-
-            // Notify the companion phone app that the workout was completed
-            WearableDataLayerService.sendMessageToPhone(
-                appContext,
-                "/maxercise/workout-completed",
-                "day=$activeDay,duration=${durationSec / 60}min,cal=$calories".toByteArray()
-            )
         } catch (e: Exception) {
             e.printStackTrace()
+        } finally {
+            clearActiveSession()
         }
     }
 

@@ -62,6 +62,11 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.runtime.compose)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+    
+    implementation(libs.health.services.client)
+    implementation(libs.concurrent.futures.ktx)
+    implementation(libs.guava)
+    implementation(libs.wear.ongoing)
 
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.ui.test.junit4)

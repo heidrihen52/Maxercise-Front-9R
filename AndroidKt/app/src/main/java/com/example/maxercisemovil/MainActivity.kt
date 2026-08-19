@@ -16,11 +16,30 @@ import com.example.maxercisemovil.ui.theme.MaxerciseMovilTheme
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 
+import android.Manifest
+import android.os.Build
+import android.content.pm.PackageManager
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+
 class MainActivity : ComponentActivity() {
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        // Permiso gestionado
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+
         val authManager = AuthManager(this)
         val startDestination = if (authManager.isLoggedIn()) {
             // Auto-sync authentication state with the WearOS watch on app startup

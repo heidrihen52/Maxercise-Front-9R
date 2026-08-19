@@ -54,6 +54,7 @@ class WearableDataLayerService : WearableListenerService() {
         when (messageEvent.path) {
             "/maxercise/sync" -> {
                 // Phone requested a sync — the app will pick this up on next resume
+                com.example.maxercisewearos.presentation.component.NotificationHelper.showSyncSuccessNotification(this)
             }
             "/maxercise/logout" -> {
                 tokenManager.clear()
@@ -71,6 +72,8 @@ class WearableDataLayerService : WearableListenerService() {
 
         tokenManager.saveToken(token)
         tokenManager.saveUserId(userId)
+        
+        com.example.maxercisewearos.presentation.component.NotificationHelper.showSyncSuccessNotification(this)
     }
 
     companion object {
@@ -92,6 +95,43 @@ class WearableDataLayerService : WearableListenerService() {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+        }
+
+        /**
+         * Sends a message to the phone requesting active auth session.
+         */
+        suspend fun requestAuthFromPhone(context: android.content.Context) {
+            sendMessageToPhone(context, "/maxercise/request-auth")
+        }
+
+        /**
+         * Checks if a persistent auth DataItem exists in Google Play Services DataClient.
+         * If found, extracts and saves the token to TokenManager.
+         */
+        suspend fun checkStoredAuthDataItem(context: android.content.Context): Boolean {
+            return try {
+                val dataClient = Wearable.getDataClient(context)
+                val dataItems = dataClient.dataItems.await()
+                var foundToken = false
+                dataItems.forEach { dataItem ->
+                    if (dataItem.uri.path == "/maxercise/auth") {
+                        val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
+                        val token = dataMap.getString("jwt_token")
+                        val userId = dataMap.getInt("user_id", 1)
+                        if (!token.isNullOrBlank()) {
+                            val tokenManager = TokenManager(context)
+                            tokenManager.saveToken(token)
+                            tokenManager.saveUserId(userId)
+                            foundToken = true
+                        }
+                    }
+                }
+                dataItems.release()
+                foundToken
+            } catch (e: Exception) {
+                e.printStackTrace()
+                false
             }
         }
     }

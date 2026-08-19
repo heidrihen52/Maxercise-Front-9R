@@ -1,6 +1,8 @@
 package com.example.maxercisewearos.presentation.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -15,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -36,37 +39,64 @@ fun SummaryScreen(
     val listState = rememberTransformingLazyColumnState()
     val transformationSpec = rememberTransformationSpec()
 
-    ScreenScaffold(scrollState = listState) { contentPadding ->
+    ScreenScaffold(
+        scrollState = listState,
+        edgeButton = {
+            EdgeButton(
+                onClick = onFinish,
+                buttonSize = EdgeButtonSize.Medium,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF0071E3),
+                    contentColor = Color.White
+                )
+            ) {
+                Text(
+                    text = "Finalizar",
+                    fontFamily = ComfortaaFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+            }
+        }
+    ) { contentPadding ->
         TransformingLazyColumn(
             state = listState,
             contentPadding = contentPadding,
             modifier = Modifier.fillMaxSize().background(Color.Black)
         ) {
             item {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                ListHeader(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp, bottom = 4.dp)
+                        .transformedHeight(this, transformationSpec),
+                    transformation = SurfaceTransformation(transformationSpec)
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.EmojiEvents,
-                        contentDescription = null,
-                        tint = Color(0xFFFFD700), // Gold
-                        modifier = Modifier.size(32.dp)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "¡Buen trabajo!",
-                        fontFamily = ComfortaaFont,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = Color.White
-                    )
-                    Text(
-                        text = "Entrenamiento Completado",
-                        fontFamily = QuicksandFont,
-                        fontSize = 11.sp,
-                        color = Color.Gray
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.EmojiEvents,
+                            contentDescription = null,
+                            tint = Color(0xFFFFD700), // Gold
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "¡Buen trabajo!",
+                            fontFamily = ComfortaaFont,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "Entrenamiento Completado",
+                            fontFamily = QuicksandFont,
+                            fontSize = 11.sp,
+                            color = Color.Gray
+                        )
+                    }
                 }
             }
 
@@ -77,6 +107,7 @@ fun SummaryScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .transformedHeight(this, transformationSpec),
+                        transformation = SurfaceTransformation(transformationSpec),
                         colors = CardDefaults.cardColors(
                             containerColor = Color(0xFF1E1E1E),
                             contentColor = Color.White
@@ -167,57 +198,21 @@ fun SummaryScreen(
                 }
 
                 item {
-                    Box(
+                    ListHeader(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 6.dp),
-                        contentAlignment = Alignment.Center
+                            .transformedHeight(this, transformationSpec),
+                        transformation = SurfaceTransformation(transformationSpec)
                     ) {
                         Text(
                             text = "${sum.exercisesCount} Ejercicios | ${sum.setsCount} Series",
                             fontFamily = QuicksandFont,
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp,
-                            color = Color(0xFF2A94FF)
+                            color = Color(0xFF2A94FF),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
                         )
-                    }
-                }
-            }
-
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .transformedHeight(this, transformationSpec)
-                        .padding(vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Button(
-                        onClick = onFinish,
-                        modifier = Modifier.fillMaxWidth(0.85f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF0071E3),
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Check,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Finalizar",
-                                fontFamily = ComfortaaFont,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
-                            )
-                        }
                     }
                 }
             }

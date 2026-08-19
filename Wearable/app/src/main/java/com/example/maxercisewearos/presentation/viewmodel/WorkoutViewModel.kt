@@ -35,8 +35,18 @@ class WorkoutViewModel(private val repository: WorkoutRepository) : ViewModel() 
     val activeSession = repository.activeSession
     val currentHeartRate = repository.currentHeartRate
 
-    val progress = repository.routineExercises.combine(repository.currentExerciseIndex) { list, index ->
-        ExerciseProgress(index + 1, list.size.coerceAtLeast(1))
+    val progress = combine(
+        repository.routineExercises,
+        repository.currentExerciseIndex,
+        repository.currentSeries
+    ) { list, index, series ->
+        val totalSets = list.sumOf { it.sets }.coerceAtLeast(1)
+        var completedSets = 0
+        for (i in 0 until index) {
+            completedSets += list[i].sets
+        }
+        completedSets += series
+        ExerciseProgress(completedSets, totalSets)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ExerciseProgress(1, 1))
 
     val isLastExercise = repository.routineExercises.combine(repository.currentExerciseIndex) { list, index ->

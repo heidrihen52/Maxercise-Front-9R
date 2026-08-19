@@ -9,8 +9,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
-    // Note: 10.0.2.2 is the special IP for Android Emulator to connect to localhost
-    private const val BASE_URL = "http://10.0.2.2:3000/api/"
+    // Note: 192.168.1.87 is your PC's local IP address. 10.0.2.2 was failing on this emulator.
+    private const val BASE_URL = "http://192.168.1.87:3000/api/"
 
     private var retrofit: Retrofit? = null
 

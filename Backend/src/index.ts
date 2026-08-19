@@ -10,7 +10,7 @@ async function bootstrap() {
 
   initSocket(httpServer);
 
-  httpServer.listen(env.port, () => {
+  httpServer.listen(env.port as number, '0.0.0.0', () => {
     console.log(`Server running on port ${env.port} [${env.nodeEnv}]`);
     console.log(`WebSocket ready via Socket.IO`);
   });

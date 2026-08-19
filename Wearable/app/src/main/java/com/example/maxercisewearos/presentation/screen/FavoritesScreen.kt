@@ -26,7 +26,9 @@ import com.example.maxercisewearos.presentation.viewmodel.HomeViewModel
 
 @Composable
 fun FavoritesScreen(
-    viewModel: HomeViewModel
+    viewModel: HomeViewModel,
+    onSelectRoutine: () -> Unit = {},
+    userId: Int = 1
 ) {
     val favoriteRoutines by viewModel.favoriteRoutines.collectAsStateWithLifecycle()
     val favoriteExercises by viewModel.favoriteExercises.collectAsStateWithLifecycle()
@@ -43,13 +45,14 @@ fun FavoritesScreen(
                 ListHeader(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(top = 8.dp)
                         .transformedHeight(this, transformationSpec),
                     transformation = SurfaceTransformation(transformationSpec)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = 6.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Favorite,
@@ -105,7 +108,9 @@ fun FavoritesScreen(
                     items(favoriteRoutines.size) { index ->
                         val routine = favoriteRoutines[index]
                         Card(
-                            onClick = { },
+                            onClick = {
+                                viewModel.selectFavoriteRoutine(userId, routine.routine_id, onSelectRoutine)
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .transformedHeight(this, transformationSpec),
@@ -115,19 +120,23 @@ fun FavoritesScreen(
                                 titleColor = Color.White
                             )
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(vertical = 2.dp)
+                            ) {
                                 Icon(
                                     imageVector = Icons.Filled.FitnessCenter,
                                     contentDescription = null,
                                     tint = Color(0xFF2A94FF),
-                                    modifier = Modifier.size(14.dp)
+                                    modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = routine.routine?.name ?: "Rutina ${routine.routine_id}",
                                     fontFamily = QuicksandFont,
-                                    fontWeight = FontWeight.Medium,
-                                    fontSize = 13.sp
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    maxLines = 2
                                 )
                             }
                         }

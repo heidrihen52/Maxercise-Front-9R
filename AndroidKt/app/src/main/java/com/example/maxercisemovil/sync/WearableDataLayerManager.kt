@@ -23,6 +23,7 @@ class WearableDataLayerManager(private val context: Context) {
         private const val AUTH_PATH = "/maxercise/auth"
         private const val SYNC_PATH = "/maxercise/sync"
         private const val LOGOUT_PATH = "/maxercise/logout"
+        const val REQUEST_AUTH_PATH = "/maxercise/request-auth"
     }
 
     /**

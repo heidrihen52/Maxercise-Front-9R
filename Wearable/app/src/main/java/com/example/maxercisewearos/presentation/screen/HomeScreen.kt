@@ -152,10 +152,11 @@ fun HomeScreen(
                 ListHeader(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(top = 12.dp)
                         .transformedHeight(this, transformationSpec),
                     transformation = SurfaceTransformation(transformationSpec)
                 ) {
-                    BrandHeader(modifier = Modifier.padding(bottom = 8.dp))
+                    BrandHeader(modifier = Modifier.padding(bottom = 4.dp))
                 }
             }
 
@@ -226,13 +227,13 @@ fun HomeScreen(
                             Icon(
                                 imageVector = Icons.Filled.FitnessCenter,
                                 contentDescription = null,
-                                tint = Color(0xFF0071E3),
+                                tint = Color(0xFF2A94FF),
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Mi Rutina",
-                                color = Color.Black,
+                                color = Color.White,
                                 fontFamily = ComfortaaFont,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp
@@ -242,10 +243,11 @@ fun HomeScreen(
                     subtitle = { 
                         Text(
                             text = activeRoutine?.routine?.name ?: "Sin rutina activa",
-                            color = Color(0xFF0071E3),
+                            color = Color(0xFF2A94FF),
                             fontFamily = QuicksandFont,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
+                            fontSize = 14.sp,
+                            maxLines = 2
                         )
                     },
                     time = {
@@ -264,9 +266,9 @@ fun HomeScreen(
                         }
                     },
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFFBFBFE),
-                        titleColor = Color.Black,
-                        subtitleColor = Color(0xFF0071E3)
+                        containerColor = Color(0xFF1C1C1E),
+                        titleColor = Color.White,
+                        subtitleColor = Color(0xFF2A94FF)
                     )
                 )
             }

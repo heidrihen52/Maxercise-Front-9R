@@ -1,5 +1,7 @@
 package com.example.maxercisewearos.presentation.screen
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,7 +36,7 @@ import com.example.maxercisewearos.presentation.component.HapticFeedbackHelper
 @Composable
 fun ExerciseScreen(
     viewModel: WorkoutViewModel,
-    onStartRest: () -> Unit,
+    onCompleteSeriesAndRest: () -> Unit,
     onFinishWorkout: () -> Unit
 ) {
     val exercise by viewModel.currentExercise.collectAsStateWithLifecycle()
@@ -75,19 +77,25 @@ fun ExerciseScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
+            CircularProgressIndicator(
+                progress = { if (progressState.total > 0) progressState.current.toFloat() / progressState.total.toFloat() else 0f },
+                modifier = Modifier.fillMaxSize(),
+                strokeWidth = 3.dp,
+                colors = ProgressIndicatorDefaults.colors(
+                    indicatorColor = Color(0xFF2A94FF),
+                    trackColor = Color(0xFF1E293B)
+                )
+            )
+            
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                LinearProgressIndicator(
-                    progress = { progressState.current.toFloat() / progressState.total.toFloat() },
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 2.dp)
-                )
                 Text(
-                    text = "Ej. ${progressState.current} de ${progressState.total}",
+                    text = "Serie ${progressState.current} de ${progressState.total}",
                     fontSize = 10.sp,
                     fontFamily = QuicksandFont,
                     color = Color.Gray,
@@ -101,7 +109,7 @@ fun ExerciseScreen(
                     fontSize = 14.sp
                 )
                 
-                val imageUrl = exercise?.exercise?.thumbnail?.replace("localhost", "10.0.2.2")
+                val imageUrl = exercise?.exercise?.thumbnail?.replace("localhost", "192.168.1.87")
                 if (!imageUrl.isNullOrEmpty()) {
                     Spacer(modifier = Modifier.height(2.dp))
                     AsyncImage(
@@ -177,49 +185,40 @@ fun ExerciseScreen(
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    if (isWorkoutFinished) {
+                if (isWorkoutFinished) {
+                    EdgeButton(
+                        onClick = onFinishWorkout,
+                        buttonSize = EdgeButtonSize.Medium,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF0071E3),
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text(
+                            text = "Finalizar",
+                            fontFamily = ComfortaaFont,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
+                } else {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
                         Button(
-                            onClick = onFinishWorkout,
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0071E3)),
-                            modifier = Modifier.height(30.dp).fillMaxWidth(0.8f)
-                        ) {
-                            Text(
-                                text = "Finalizar",
-                                fontFamily = ComfortaaFont,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp,
-                                color = Color.White
-                            )
-                        }
-                    } else {
-                        Button(
-                            onClick = { viewModel.completeSeries() },
+                            onClick = { 
+                                viewModel.completeSeries()
+                                onCompleteSeriesAndRest()
+                            },
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                            modifier = Modifier.size(38.dp)
+                            modifier = Modifier.size(54.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Check,
                                 contentDescription = "Completar serie",
-                                modifier = Modifier.size(22.dp),
-                                tint = Color.White
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.width(16.dp))
-                        
-                        Button(
-                            onClick = onStartRest,
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-                            modifier = Modifier.size(38.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Timer,
-                                contentDescription = "Descanso",
-                                modifier = Modifier.size(22.dp),
+                                modifier = Modifier.size(32.dp),
                                 tint = Color.White
                             )
                         }
