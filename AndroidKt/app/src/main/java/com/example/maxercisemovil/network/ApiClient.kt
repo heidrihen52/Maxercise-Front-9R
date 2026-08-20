@@ -9,8 +9,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
-    // Note: 192.168.1.87 is your PC's local IP address. 10.0.2.2 was failing on this emulator.
-    private const val BASE_URL = "http://192.168.1.87:3000/api/"
+    // Cambia esto a la IP local de tu máquina donde corre el backend Node.js
+    private const val BASE_URL = "http://10.10.60.9:3000/api/"
 
     private var retrofit: Retrofit? = null
 

@@ -65,7 +65,7 @@ class MainActivity : ComponentActivity() {
         }
 
         // Local Node.js Backend URL (using host LAN IP)
-        val baseUrl = "http://192.168.1.87:3000/"
+        val baseUrl = "http://10.10.60.9:3000/"
         val repository = WorkoutRepository.create(baseUrl, applicationContext)
         val tokenManager = TokenManager(applicationContext)
 
